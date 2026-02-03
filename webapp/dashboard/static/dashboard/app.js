@@ -1,14 +1,11 @@
 /* ============================================================
-   PM2.5 EWS — App Logic
+   PM2.5 EWS — App Logic (All Cities Combined)
    ============================================================ */
 
 let stations = [];
-let currentCity = "Toronto";
-let cityLat = 43.7479;
-let cityLon = -79.2741;
+let citiesInfo = {};
 let map = null;
 let mapMarkers = [];
-let mapCityMarker = null;
 let lastResults = null;
 
 // DOM refs
@@ -31,23 +28,7 @@ document.querySelectorAll(".tab").forEach(t => {
         t.classList.add("tab-active");
         document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("tab-visible"));
         document.getElementById("tab-" + t.dataset.tab).classList.add("tab-visible");
-
-        if (t.dataset.tab === "map") {
-            initMap();
-        }
-    });
-});
-
-// ---- City switching ----
-document.querySelectorAll(".pill").forEach(pill => {
-    pill.addEventListener("click", () => {
-        document.querySelector(".pill-active")?.classList.remove("pill-active");
-        pill.classList.add("pill-active");
-        currentCity = pill.dataset.city;
-        bannerTitle.textContent = currentCity.toUpperCase();
-        resetBanner();
-        lastResults = null;
-        loadStations().then(() => fetchLive());
+        if (t.dataset.tab === "map") initMap();
     });
 });
 
@@ -74,15 +55,13 @@ function resetBanner() {
 
 async function loadStations() {
     try {
-        const resp = await fetch(`/api/stations/${currentCity}/`);
+        const resp = await fetch("/api/stations/");
         const data = await resp.json();
         stations = data.stations;
-        cityLat = data.city_lat;
-        cityLon = data.city_lon;
-        stationCount.textContent = `${stations.length} stations`;
+        citiesInfo = data.cities || {};
+        stationCount.textContent = `${stations.length} stations across ${Object.keys(citiesInfo).length} cities`;
         document.getElementById("stat-total").textContent = stations.length;
         renderTable(null);
-        // Update map if visible
         if (map) updateMapMarkers(null);
     } catch (e) {
         statusEl.textContent = `Error loading stations: ${e}`;
@@ -91,21 +70,20 @@ async function loadStations() {
 
 function renderTable(results) {
     const resultMap = {};
-    if (results) results.forEach(r => { resultMap[r.id] = r; });
+    if (results) results.forEach(r => { resultMap[r.id + (r.target_city || "")] = r; });
 
     let html = "";
-    let currentTier = null;
+    let currentCity = null;
 
     stations.forEach(st => {
-        if (st.tier !== currentTier) {
-            currentTier = st.tier;
-            const label = st.tier === 1
-                ? "Tier 1 — Greater than 250 km · 12–48 hr lead"
-                : "Tier 2 — 100–250 km · 6–18 hr lead";
-            html += `<div class="tier-sep">${label}</div>`;
+        const city = st.target_city || "";
+        if (city !== currentCity) {
+            currentCity = city;
+            html += `<div class="tier-sep" style="color:#3b82f6;font-size:13px;padding:12px 20px 6px;">${city}</div>`;
         }
 
-        const r = resultMap[st.id];
+        // Match by id + target_city, or just id
+        const r = resultMap[st.id + city] || (results ? results.find(x => x.id === st.id && x.target_city === city) : null);
         const hasData = !!r;
         const pm = hasData ? r.pm25.toFixed(1) : "—";
         const pred = hasData ? r.predicted.toFixed(1) : "—";
@@ -116,6 +94,7 @@ function renderTable(results) {
         }
 
         html += `<div class="row${hasData ? "" : " no-data"}">
+            <span class="td-city">${city}</span>
             <span class="td-station">${st.city_name}</span>
             <span class="td-dist">${st.distance.toFixed(0)} km</span>
             <span class="td-dir">${st.direction}</span>
@@ -143,7 +122,7 @@ function updateBanner(results) {
     const worst = results[0];
     banner.style.setProperty("--banner-color", worst.level_hex);
     banner.style.borderColor = worst.level_hex + "44";
-    bannerLevel.textContent = `${worst.level_name}  ·  ${worst.predicted.toFixed(1)} µg/m³`;
+    bannerLevel.textContent = `${worst.level_name}  ·  ${worst.predicted.toFixed(1)} µg/m³  ·  ${worst.target_city || ""} via ${worst.station}`;
     bannerLevel.style.color = worst.level_hex;
     bannerHealth.textContent = worst.health;
     bannerTitle.style.color = "#a1a1aa";
@@ -170,9 +149,9 @@ function handleResults(results, label) {
 async function runDemo() {
     statusEl.textContent = "Loading demo scenario...";
     try {
-        const resp = await fetch(`/api/demo/${currentCity}/`);
+        const resp = await fetch("/api/demo/");
         const data = await resp.json();
-        handleResults(data.results, `Demo: ${currentCity} wildfire scenario`);
+        handleResults(data.results, "Demo: All cities wildfire scenario");
     } catch (e) {
         statusEl.textContent = `Error: ${e}`;
     }
@@ -202,13 +181,15 @@ function hideProgress() {
     setTimeout(() => { progressWrap.style.display = "none"; }, 400);
 }
 
+const svgRefresh = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
+
 async function fetchLive() {
     btnFetch.disabled = true;
     btnFetch.innerHTML = svgRefresh + " Fetching...";
-    statusEl.textContent = "Connecting to OpenAQ...";
-    showProgress("Fetching live data from OpenAQ...");
+    statusEl.textContent = "Connecting to PurpleAir...";
+    showProgress("Fetching live data from PurpleAir...");
     try {
-        const resp = await fetch(`/api/fetch/${currentCity}/`, { method: "POST" });
+        const resp = await fetch("/api/fetch/", { method: "POST" });
         const data = await resp.json();
         if (data.error) {
             statusEl.textContent = data.error;
@@ -225,24 +206,14 @@ async function fetchLive() {
     }
 }
 
-const svgRefresh = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
-
 // ---- Map functions ----
 function initMap() {
-    if (map) {
-        map.invalidateSize();
-        return;
-    }
-    map = L.map("map-container", {
-        zoomControl: true,
-        attributionControl: true,
-    }).setView([cityLat, cityLon], 6);
-
+    if (map) { map.invalidateSize(); return; }
+    map = L.map("map-container", { zoomControl: true, attributionControl: true }).setView([52, -96], 4);
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
         maxZoom: 18,
     }).addTo(map);
-
     updateMapMarkers(lastResults);
 }
 
@@ -256,33 +227,33 @@ function createCircleIcon(color, size) {
 }
 
 function updateMapMarkers(results) {
-    // Clear existing
     mapMarkers.forEach(m => map.removeLayer(m));
     mapMarkers = [];
-    if (mapCityMarker) { map.removeLayer(mapCityMarker); mapCityMarker = null; }
 
     const resultMap = {};
-    if (results) results.forEach(r => { resultMap[r.id] = r; });
+    if (results) results.forEach(r => { resultMap[r.id + (r.target_city || "")] = r; });
 
-    // City center marker
-    mapCityMarker = L.marker([cityLat, cityLon], {
-        icon: L.divIcon({
-            className: "",
-            html: `<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 12px #3b82f688;"></div>`,
-            iconSize: [18, 18],
-            iconAnchor: [9, 9],
-        }),
-        zIndexOffset: 1000,
-    }).addTo(map);
-    mapCityMarker.bindPopup(`<div class="popup-name">${currentCity}</div><div style="color:#a1a1aa">Target City</div>`);
-    mapMarkers.push(mapCityMarker);
+    // City center markers
+    for (const [name, info] of Object.entries(citiesInfo)) {
+        const m = L.marker([info.lat, info.lon], {
+            icon: L.divIcon({
+                className: "",
+                html: `<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 12px #3b82f688;"></div>`,
+                iconSize: [18, 18],
+                iconAnchor: [9, 9],
+            }),
+            zIndexOffset: 1000,
+        }).addTo(map);
+        m.bindPopup(`<div class="popup-name">${info.label || name}</div><div style="color:#a1a1aa">Target City</div>`);
+        mapMarkers.push(m);
+    }
 
     // Station markers
     stations.forEach(st => {
         if (st.lat == null || st.lon == null) return;
-
-        const r = resultMap[st.id];
-        let color = "#52525b"; // no data
+        const city = st.target_city || "";
+        const r = resultMap[st.id + city];
+        let color = "#52525b";
         let size = 10;
         let popupExtra = "";
 
@@ -297,25 +268,20 @@ function updateMapMarkers(results) {
             `;
         }
 
-        const marker = L.marker([st.lat, st.lon], {
-            icon: createCircleIcon(color, size),
-        }).addTo(map);
-
+        const marker = L.marker([st.lat, st.lon], { icon: createCircleIcon(color, size) }).addTo(map);
         marker.bindPopup(`
             <div class="popup-name">${st.city_name}</div>
+            <div class="popup-row"><span class="popup-label">For:</span><span class="popup-val">${city}</span></div>
             <div class="popup-row"><span class="popup-label">Distance:</span><span class="popup-val">${st.distance.toFixed(0)} km ${st.direction}</span></div>
             <div class="popup-row"><span class="popup-label">Tier:</span><span class="popup-val">${st.tier}</span></div>
-            <div class="popup-row"><span class="popup-label">R:</span><span class="popup-val">${st.R.toFixed(3)}</span></div>
             ${popupExtra}
         `);
 
-        // Draw a faint line to city center if has data
-        if (r) {
-            const line = L.polyline([[st.lat, st.lon], [cityLat, cityLon]], {
-                color: r.level_hex,
-                weight: 1,
-                opacity: 0.25,
-                dashArray: "4 6",
+        // Draw line to target city
+        if (r && citiesInfo[city]) {
+            const ci = citiesInfo[city];
+            const line = L.polyline([[st.lat, st.lon], [ci.lat, ci.lon]], {
+                color: r.level_hex, weight: 1, opacity: 0.2, dashArray: "4 6",
             }).addTo(map);
             mapMarkers.push(line);
         }
@@ -323,14 +289,16 @@ function updateMapMarkers(results) {
         mapMarkers.push(marker);
     });
 
-    // Fit bounds
+    // Fit Canada bounds
     if (stations.length > 0) {
-        const lats = stations.filter(s => s.lat).map(s => s.lat).concat([cityLat]);
-        const lons = stations.filter(s => s.lon).map(s => s.lon).concat([cityLon]);
-        map.fitBounds([
-            [Math.min(...lats) - 1, Math.min(...lons) - 1],
-            [Math.max(...lats) + 1, Math.max(...lons) + 1],
-        ]);
+        const lats = stations.filter(s => s.lat).map(s => s.lat);
+        const lons = stations.filter(s => s.lon).map(s => s.lon);
+        if (lats.length) {
+            map.fitBounds([
+                [Math.min(...lats) - 1, Math.min(...lons) - 1],
+                [Math.max(...lats) + 1, Math.max(...lons) + 1],
+            ]);
+        }
     }
 }
 
@@ -338,13 +306,9 @@ function updateMapMarkers(results) {
 async function mapRunDemo() {
     mapStatus.textContent = "Loading demo...";
     try {
-        const resp = await fetch(`/api/demo/${currentCity}/`);
+        const resp = await fetch("/api/demo/");
         const data = await resp.json();
-        lastResults = data.results;
-        updateMapMarkers(data.results);
-        renderTable(data.results);
-        updateBanner(data.results);
-        mapStatus.textContent = `Demo: ${currentCity} · ${data.results.length} stations`;
+        handleResults(data.results, "Demo: All cities");
     } catch (e) {
         mapStatus.textContent = `Error: ${e}`;
     }
@@ -354,16 +318,12 @@ async function mapFetchLive() {
     mapBtnFetch.disabled = true;
     mapStatus.textContent = "Fetching live data...";
     try {
-        const resp = await fetch(`/api/fetch/${currentCity}/`, { method: "POST" });
+        const resp = await fetch("/api/fetch/", { method: "POST" });
         const data = await resp.json();
         if (data.error) {
             mapStatus.textContent = data.error;
         } else {
-            lastResults = data.results;
-            updateMapMarkers(data.results);
-            renderTable(data.results);
-            updateBanner(data.results);
-            mapStatus.textContent = `Live data · ${data.results.length} stations`;
+            handleResults(data.results, `Live data · ${data.results.length} stations`);
         }
     } catch (e) {
         mapStatus.textContent = `Error: ${e}`;
@@ -372,17 +332,13 @@ async function mapFetchLive() {
     }
 }
 
-// Init — load stations then auto-fetch live data
-const AUTO_REFRESH_MS = 15 * 60 * 1000; // 15 minutes
+// Init — load all stations then auto-fetch
+const AUTO_REFRESH_MS = 15 * 60 * 1000;
 
 async function init() {
     await loadStations();
     fetchLive();
 }
-
 init();
 
-// Auto-refresh every 15 minutes
-setInterval(() => {
-    fetchLive();
-}, AUTO_REFRESH_MS);
+setInterval(() => { fetchLive(); }, AUTO_REFRESH_MS);

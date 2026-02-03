@@ -146,6 +146,29 @@ def load_stations(city_key):
     return stations
 
 
+def load_all_stations():
+    """Load stations from all cities, tagging each with its target city."""
+    if "_all" in _station_cache:
+        return _station_cache["_all"]
+    all_stations = []
+    for city_key in CITIES:
+        for st in load_stations(city_key):
+            st_copy = dict(st)
+            st_copy["target_city"] = city_key
+            all_stations.append(st_copy)
+    all_stations.sort(key=lambda s: (s["target_city"], s["tier"], -s["distance"]))
+    _station_cache["_all"] = all_stations
+    return all_stations
+
+
+def get_all_demo_data():
+    """Merge demo data from all cities into one dict."""
+    merged = {}
+    for city_data in DEMO_DATA.values():
+        merged.update(city_data)
+    return merged
+
+
 def _load_coords(city_key):
     """Load lat/lon from 'All Stations Data' sheet. Returns {station_id: (lat, lon)}."""
     fn = os.path.join(DATA_DIR, f"{city_key}_PM25_EWS_Regression.xlsx")
@@ -215,6 +238,7 @@ def evaluate(stations, readings):
             "level_name": lvl["name"], "level_hex": lvl["hex"],
             "level_text_color": lvl["text_color"], "health": lvl["health"],
             "lead": lead_time_str(st["tier"], st["distance"]),
+            "target_city": st.get("target_city", ""),
         })
     results.sort(key=lambda x: x["predicted"], reverse=True)
     return results

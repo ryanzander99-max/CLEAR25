@@ -26,9 +26,7 @@
                     <button class="tab" data-tab="feedback">Feedback</button>
                 </div>
                 <div class="nav-pills">
-                    {% for city in cities %}
-                    <button class="pill{% if forloop.first %} pill-active{% endif %}" data-city="{{ city }}">{{ city }}</button>
-                    {% endfor %}
+                    <span class="pill pill-active" style="cursor:default;">All Cities</span>
                 </div>
             </div>
         </nav>
@@ -42,7 +40,7 @@
                 <div id="banner" class="banner">
                     <div class="banner-glow"></div>
                     <div class="banner-content">
-                        <div id="banner-title" class="banner-city">TORONTO</div>
+                        <div id="banner-title" class="banner-city">ALL CITIES</div>
                         <div id="banner-level" class="banner-status">Waiting for data</div>
                         <div id="banner-health" class="banner-health"></div>
                     </div>
@@ -90,6 +88,7 @@
             <!-- Table -->
             <div class="table-card">
                 <div class="table-head">
+                    <span class="th th-city">City</span>
                     <span class="th th-station">Station</span>
                     <span class="th th-dist">Distance</span>
                     <span class="th th-dir">Dir</span>

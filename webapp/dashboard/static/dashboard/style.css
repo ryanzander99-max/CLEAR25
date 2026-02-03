@@ -284,7 +284,8 @@ body {
 .table-body::-webkit-scrollbar-track { background: transparent; }
 .table-body::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
 
-.th-station, .td-station { flex: 2; min-width: 160px; }
+.th-city,    .td-city    { width: 90px; font-weight: 600; color: #3b82f6; font-size: 12px; }
+.th-station, .td-station { flex: 2; min-width: 140px; }
 .th-dist,    .td-dist    { width: 80px; text-align: right; }
 .th-dir,     .td-dir     { width: 50px; text-align: center; }
 .th-tier,    .td-tier    { width: 50px; text-align: center; }
