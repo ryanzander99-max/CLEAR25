@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#09090b"/>
+  <circle cx="32" cy="34" r="18" fill="none" stroke="url(#g)" stroke-width="3" opacity="0.3"/>
+  <circle cx="32" cy="34" r="11" fill="none" stroke="url(#g)" stroke-width="2.5" opacity="0.5"/>
+  <circle cx="32" cy="34" r="4.5" fill="#3b82f6"/>
+  <path d="M32 8 L34.5 14 L32 12.5 L29.5 14 Z" fill="#3b82f6"/>
+  <text x="32" y="58" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="8" fill="#a1a1aa">C.L.E.A.R</text>
+</svg>
