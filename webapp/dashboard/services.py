@@ -18,9 +18,9 @@ CONFIG_PATH = os.path.join(DATA_DIR, "config.json")
 # Alert levels & colors
 # ---------------------------------------------------------------------------
 ALERT_LEVELS = [
-    {"name": "LOW",       "min": 0,   "max": 20,    "hex": "#A8D5A0", "text_color": "black",
+    {"name": "NONE",      "min": 0,   "max": 31,    "hex": "#A8D5A0", "text_color": "black",
      "health": "No precautions needed."},
-    {"name": "MODERATE",  "min": 20,  "max": 60,    "hex": "#D2CC9A", "text_color": "black",
+    {"name": "MODERATE",  "min": 31,  "max": 60,    "hex": "#D2CC9A", "text_color": "black",
      "health": "Sensitive groups (children/elderly) avoid strenuous activities."},
     {"name": "HIGH",      "min": 60,  "max": 80,    "hex": "#F0BFA0", "text_color": "black",
      "health": "Everyone should reduce physical exertion. N95 or KN95 mask. Keep doors and windows closed. HVAC to recirculate. Run HEPA filter."},
@@ -29,6 +29,11 @@ ALERT_LEVELS = [
     {"name": "EXTREME",   "min": 120, "max": 1e9,   "hex": "#E65C50", "text_color": "white",
      "health": "Halt indoor pollution. No frying or sauteing. No vacuuming. No candles. No wood-burning stoves."},
 ]
+
+# Alert rule thresholds
+RULE1_THRESHOLD = 55    # Single station >= 55 → immediate alert
+RULE2_PRIMARY = 35      # Dual-station: Station A sustained threshold
+RULE2_SECONDARY = 25    # Dual-station: Station B corroboration threshold
 
 CITIES = {
     "Toronto":   {"label": "Toronto",   "lat": 43.7479, "lon": -79.2741},
@@ -221,7 +226,16 @@ def lead_time_str(tier, dist):
     return "6-12 hrs"
 
 
-def evaluate(stations, readings):
+def evaluate(stations, readings, previous_readings=None):
+    """Evaluate stations and check alert rules.
+
+    previous_readings: dict of {station_id: pm25} from the previous hour,
+                       used for Rule 2 (dual-station sustained check).
+    """
+    if previous_readings is None:
+        previous_readings = {}
+
+    # Build per-station results
     results = []
     for st in stations:
         sid = st["id"]
@@ -241,7 +255,83 @@ def evaluate(stations, readings):
             "target_city": st.get("target_city", ""),
         })
     results.sort(key=lambda x: x["predicted"], reverse=True)
-    return results
+
+    # --- City-level alert determination ---
+    # Group results by target city
+    city_results = {}
+    for r in results:
+        city = r.get("target_city", "")
+        city_results.setdefault(city, []).append(r)
+
+    city_alerts = {}
+    for city, city_rows in city_results.items():
+        alert_triggered = False
+        trigger_rule = None
+        max_predicted = 0.0
+
+        # Rule 1: any station >= 55 µg/m³
+        for r in city_rows:
+            if r["pm25"] >= RULE1_THRESHOLD:
+                alert_triggered = True
+                trigger_rule = "rule1"
+                if r["predicted"] > max_predicted:
+                    max_predicted = r["predicted"]
+
+        # Rule 2: dual-station sustained (needs previous readings)
+        if not alert_triggered and previous_readings:
+            # Stations currently >= 35 that were also >= 35 last hour
+            sustained_primary = [
+                r for r in city_rows
+                if r["pm25"] >= RULE2_PRIMARY
+                and previous_readings.get(r["id"], 0) >= RULE2_PRIMARY
+            ]
+            # Stations currently >= 25 that were also >= 25 last hour
+            sustained_secondary = [
+                r for r in city_rows
+                if r["pm25"] >= RULE2_SECONDARY
+                and previous_readings.get(r["id"], 0) >= RULE2_SECONDARY
+            ]
+            # Need at least one primary AND a *different* secondary
+            for primary in sustained_primary:
+                for secondary in sustained_secondary:
+                    if primary["id"] != secondary["id"]:
+                        alert_triggered = True
+                        trigger_rule = "rule2"
+                        break
+                if alert_triggered:
+                    break
+
+        if alert_triggered and max_predicted == 0.0:
+            # Use highest predicted value from any station in this city
+            max_predicted = max((r["predicted"] for r in city_rows), default=0)
+
+        if alert_triggered:
+            lvl = get_alert_level(max_predicted)
+            # Only issue alert if predicted >= 31 (MODERATE or above)
+            if lvl["name"] != "NONE":
+                city_alerts[city] = {
+                    "alert": True,
+                    "rule": trigger_rule,
+                    "predicted_pm25": round(max_predicted, 1),
+                    "level_name": lvl["name"],
+                    "level_hex": lvl["hex"],
+                    "level_text_color": lvl["text_color"],
+                    "health": lvl["health"],
+                }
+
+        if city not in city_alerts:
+            none_lvl = ALERT_LEVELS[0]
+            city_alerts[city] = {
+                "alert": False,
+                "rule": None,
+                "predicted_pm25": round(max((r["predicted"] for r in city_rows), default=0), 1),
+                "level_name": none_lvl["name"],
+                "level_hex": none_lvl["hex"],
+                "level_text_color": none_lvl["text_color"],
+                "health": none_lvl["health"],
+            }
+
+    return {"stations": results, "city_alerts": city_alerts}
 
 
 # ---------------------------------------------------------------------------

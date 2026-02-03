@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from . import services
+from .models import ReadingSnapshot
 
 
 def index(request):
@@ -30,8 +31,9 @@ def api_demo(request, city=None):
     else:
         stations = services.load_all_stations()
         readings = services.get_all_demo_data()
-    results = services.evaluate(stations, readings)
-    return JsonResponse({"results": results})
+    # Demo uses same readings as "previous" to simulate sustained conditions
+    result = services.evaluate(stations, readings, previous_readings=readings)
+    return JsonResponse({"results": result["stations"], "city_alerts": result["city_alerts"]})
 
 
 @csrf_exempt
@@ -58,13 +60,33 @@ def api_fetch(request, city=None):
     else:
         stations = services.load_all_stations()
     readings = services.fetch_latest_pm25(api_key, stations)
-    results = services.evaluate(stations, readings)
+
+    # Load previous readings for Rule 2 (dual-station sustained check)
+    previous_readings = {}
+    for city_key in services.CITIES:
+        try:
+            snap = ReadingSnapshot.objects.get(city=city_key)
+            previous_readings.update(snap.readings)
+        except ReadingSnapshot.DoesNotExist:
+            pass
+
+    result = services.evaluate(stations, readings, previous_readings=previous_readings)
+
+    # Save current readings as the new snapshot for next fetch
+    city_readings = {}
+    for st in stations:
+        sid = st["id"]
+        if sid in readings:
+            tc = st.get("target_city", "")
+            city_readings.setdefault(tc, {})[sid] = readings[sid]
+    for city_key, cr in city_readings.items():
+        ReadingSnapshot.objects.update_or_create(city=city_key, defaults={"readings": cr})
 
     profile.last_fetch_time = timezone.now()
-    profile.last_fetch_results = results
+    profile.last_fetch_results = result
     profile.save(update_fields=["last_fetch_time", "last_fetch_results"])
 
-    return JsonResponse({"results": results})
+    return JsonResponse({"results": result["stations"], "city_alerts": result["city_alerts"]})
 
 
 def api_auth_status(request):
@@ -85,7 +107,11 @@ def api_last_results(request):
         return JsonResponse({"error": "Login required"}, status=401)
     profile = request.user.profile
     if profile.last_fetch_results:
-        return JsonResponse({"results": profile.last_fetch_results})
+        cached = profile.last_fetch_results
+        # Handle both old format (list) and new format (dict with stations/city_alerts)
+        if isinstance(cached, dict) and "stations" in cached:
+            return JsonResponse({"results": cached["stations"], "city_alerts": cached.get("city_alerts", {})})
+        return JsonResponse({"results": cached})
     return JsonResponse({"results": None})
 
 

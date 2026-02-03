@@ -31,6 +31,13 @@ class UserProfile(models.Model):
         return max(0, int(remaining.total_seconds()))
 
 
+class ReadingSnapshot(models.Model):
+    """Stores the most recent readings per city for Rule 2 (dual-station sustained check)."""
+    city = models.CharField(max_length=50, unique=True)
+    readings = models.JSONField(default=dict)
+    timestamp = models.DateTimeField(auto_now=True)
+
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

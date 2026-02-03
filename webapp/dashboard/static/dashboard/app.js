@@ -7,6 +7,7 @@ let citiesInfo = {};
 let map = null;
 let mapMarkers = [];
 let lastResults = null;
+let lastCityAlerts = null;
 
 // Auth state
 let authState = { authenticated: false, can_fetch: false, seconds_remaining: 0 };
@@ -186,7 +187,7 @@ function renderTable(results) {
     </div>`;
 }
 
-function updateCityCards(results) {
+function updateCityCards(results, cityAlerts) {
     const cityNames = Object.keys(citiesInfo);
 
     cityNames.forEach(city => {
@@ -214,12 +215,30 @@ function updateCityCards(results) {
             return;
         }
 
-        const worst = cityResults[0];
-        card.style.setProperty("--card-color", worst.level_hex);
-        card.style.borderColor = worst.level_hex + "44";
-        levelEl.textContent = `${worst.level_name}  ·  ${worst.predicted.toFixed(1)} µg/m³`;
-        levelEl.style.color = worst.level_hex;
-        detailEl.textContent = `via ${worst.station} · ${cityResults.length} stations`;
+        // Use city-level alert if available
+        const alert = cityAlerts && cityAlerts[city];
+        if (alert) {
+            card.style.setProperty("--card-color", alert.level_hex);
+            card.style.borderColor = alert.level_hex + "44";
+            if (alert.alert) {
+                const ruleLabel = alert.rule === "rule1" ? "Single station ≥55" : "Dual station sustained";
+                levelEl.textContent = `${alert.level_name}  ·  ${alert.predicted_pm25} µg/m³`;
+                levelEl.style.color = alert.level_hex;
+                detailEl.textContent = `${ruleLabel} · ${cityResults.length} stations`;
+            } else {
+                levelEl.textContent = `No Alert  ·  ${alert.predicted_pm25} µg/m³`;
+                levelEl.style.color = alert.level_hex;
+                detailEl.textContent = `${cityResults.length} stations reporting`;
+            }
+        } else {
+            // Fallback: use worst station prediction
+            const worst = cityResults[0];
+            card.style.setProperty("--card-color", worst.level_hex);
+            card.style.borderColor = worst.level_hex + "44";
+            levelEl.textContent = `${worst.level_name}  ·  ${worst.predicted.toFixed(1)} µg/m³`;
+            levelEl.style.color = worst.level_hex;
+            detailEl.textContent = `via ${worst.station} · ${cityResults.length} stations`;
+        }
     });
 
     if (results && results.length > 0) {
@@ -235,10 +254,11 @@ function updateCityCards(results) {
     }
 }
 
-function handleResults(results, label) {
+function handleResults(results, label, cityAlerts) {
     lastResults = results;
+    lastCityAlerts = cityAlerts || null;
     renderTable(results);
-    updateCityCards(results);
+    updateCityCards(results, cityAlerts);
     if (map) updateMapMarkers(results);
     const count = results ? results.length : 0;
     statusEl.textContent = `${label} · ${count} stations reporting`;
@@ -250,7 +270,7 @@ async function runDemo() {
     try {
         const resp = await fetch("/api/demo/");
         const data = await resp.json();
-        handleResults(data.results, "Demo: All cities wildfire scenario");
+        handleResults(data.results, "Demo: All cities wildfire scenario", data.city_alerts);
     } catch (e) {
         statusEl.textContent = `Error: ${e}`;
     }
@@ -312,7 +332,7 @@ async function fetchLive() {
             statusEl.textContent = data.error;
         } else {
             const now = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
-            handleResults(data.results, `Live data · ${now}`);
+            handleResults(data.results, `Live data · ${now}`, data.city_alerts);
             // Start 30-min cooldown
             authState.can_fetch = false;
             authState.seconds_remaining = 1800;
@@ -362,6 +382,18 @@ function getCityAlertInfo(results, cityName) {
     if (!results) return { color: "#3b82f6", level: "No Data", predicted: null, hex: "#3b82f6" };
     const cityResults = results.filter(r => r.target_city === cityName);
     if (cityResults.length === 0) return { color: "#3b82f6", level: "No Data", predicted: null, hex: "#3b82f6" };
+
+    // Use city-level alert if available
+    const alert = lastCityAlerts && lastCityAlerts[cityName];
+    if (alert) {
+        return {
+            color: alert.level_hex, level: alert.level_name,
+            predicted: alert.predicted_pm25, hex: alert.level_hex,
+            textColor: alert.level_text_color,
+            lead: cityResults[0].lead, station: cityResults[0].station,
+            count: cityResults.length, isAlert: alert.alert, rule: alert.rule,
+        };
+    }
     const worst = cityResults[0];
     return { color: worst.level_hex, level: worst.level_name, predicted: worst.predicted, hex: worst.level_hex, textColor: worst.level_text_color, lead: worst.lead, station: worst.station, count: cityResults.length };
 }
@@ -483,7 +515,7 @@ async function mapRunDemo() {
     try {
         const resp = await fetch("/api/demo/");
         const data = await resp.json();
-        handleResults(data.results, "Demo: All cities");
+        handleResults(data.results, "Demo: All cities", data.city_alerts);
     } catch (e) {
         mapStatus.textContent = `Error: ${e}`;
     }
@@ -500,7 +532,7 @@ async function loadCachedResults() {
         if (resp.ok) {
             const data = await resp.json();
             if (data.results) {
-                handleResults(data.results, "Cached data from last fetch");
+                handleResults(data.results, "Cached data from last fetch", data.city_alerts);
                 return true;
             }
         }
