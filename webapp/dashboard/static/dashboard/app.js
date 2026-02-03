@@ -493,12 +493,30 @@ async function mapFetchLive() {
     fetchLive();
 }
 
+// Load cached results from last fetch
+async function loadCachedResults() {
+    try {
+        const resp = await fetch("/api/last-results/");
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.results) {
+                handleResults(data.results, "Cached data from last fetch");
+                return true;
+            }
+        }
+    } catch (e) { /* ignore */ }
+    return false;
+}
+
 // Init
 async function init() {
     await checkAuthStatus();
     await loadStations();
-    if (authState.authenticated && authState.can_fetch) {
-        fetchLive();
+    if (authState.authenticated) {
+        const hasCached = await loadCachedResults();
+        if (!hasCached && authState.can_fetch) {
+            fetchLive();
+        }
     }
 }
 init();

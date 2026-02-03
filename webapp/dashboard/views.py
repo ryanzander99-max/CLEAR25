@@ -1,10 +1,8 @@
 from django.contrib import auth
-from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 
 from . import services
 
@@ -63,7 +61,8 @@ def api_fetch(request, city=None):
     results = services.evaluate(stations, readings)
 
     profile.last_fetch_time = timezone.now()
-    profile.save(update_fields=["last_fetch_time"])
+    profile.last_fetch_results = results
+    profile.save(update_fields=["last_fetch_time", "last_fetch_results"])
 
     return JsonResponse({"results": results})
 
@@ -73,50 +72,21 @@ def api_auth_status(request):
         profile = request.user.profile
         return JsonResponse({
             "authenticated": True,
-            "username": request.user.username,
+            "username": request.user.get_full_name() or request.user.email or request.user.username,
             "can_fetch": profile.can_fetch(),
             "seconds_remaining": profile.seconds_until_fetch(),
+            "has_cached_results": profile.last_fetch_results is not None,
         })
     return JsonResponse({"authenticated": False})
 
 
-def login_view(request):
-    if request.user.is_authenticated:
-        return redirect("/")
-    error = ""
-    if request.method == "POST":
-        username = request.POST.get("username", "").strip()
-        password = request.POST.get("password", "")
-        user = auth.authenticate(request, username=username, password=password)
-        if user is not None:
-            auth.login(request, user)
-            return redirect(request.GET.get("next", "/"))
-        error = "Invalid username or password."
-    return render(request, "dashboard/login.html", {"error": error})
-
-
-def signup_view(request):
-    if request.user.is_authenticated:
-        return redirect("/")
-    error = ""
-    if request.method == "POST":
-        username = request.POST.get("username", "").strip()
-        email = request.POST.get("email", "").strip()
-        password = request.POST.get("password", "")
-        confirm = request.POST.get("confirm", "")
-        if not username or not password:
-            error = "Username and password are required."
-        elif len(password) < 6:
-            error = "Password must be at least 6 characters."
-        elif password != confirm:
-            error = "Passwords do not match."
-        elif User.objects.filter(username=username).exists():
-            error = "Username already taken."
-        else:
-            user = User.objects.create_user(username=username, email=email, password=password)
-            auth.login(request, user)
-            return redirect("/")
-    return render(request, "dashboard/signup.html", {"error": error})
+def api_last_results(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Login required"}, status=401)
+    profile = request.user.profile
+    if profile.last_fetch_results:
+        return JsonResponse({"results": profile.last_fetch_results})
+    return JsonResponse({"results": None})
 
 
 def logout_view(request):

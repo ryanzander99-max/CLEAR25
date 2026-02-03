@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}?v=5">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}?v=6">
 </head>
 <body>
     <div class="app">
@@ -27,11 +27,10 @@
                 </div>
                 <div class="nav-auth">
                     {% if user.is_authenticated %}
-                        <span class="auth-user">{{ user.username }}</span>
+                        <span class="auth-user">{{ user.get_full_name|default:user.email|default:user.username }}</span>
                         <a href="{% url 'logout' %}" class="auth-link">Log out</a>
                     {% else %}
-                        <a href="{% url 'login' %}" class="auth-link">Log in</a>
-                        <a href="{% url 'signup' %}" class="auth-link auth-link-primary">Sign up</a>
+                        <a href="/accounts/google/login/?process=login" class="auth-link auth-link-primary">Sign in with Google</a>
                     {% endif %}
                 </div>
             </div>
@@ -490,6 +489,6 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{% static 'dashboard/app.js' %}?v=5"></script>
+    <script src="{% static 'dashboard/app.js' %}?v=6"></script>
 </body>
 </html>

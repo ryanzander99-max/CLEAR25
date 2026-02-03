@@ -1058,6 +1058,29 @@ body {
     font-weight: 600;
 }
 
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 20px;
+    background: #fff;
+    color: #1f1f1f;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.google-btn:hover {
+    background: #f0f0f0;
+}
+
 .auth-footer a:hover { text-decoration: underline; }
 
 /* ============================================================

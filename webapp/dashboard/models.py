@@ -9,6 +9,7 @@ from django.utils import timezone
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     last_fetch_time = models.DateTimeField(null=True, blank=True)
+    last_fetch_results = models.JSONField(null=True, blank=True)
 
     def can_fetch(self):
         if self.last_fetch_time is None:
