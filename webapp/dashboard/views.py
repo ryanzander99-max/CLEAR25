@@ -53,7 +53,7 @@ def api_fetch(request, city=None):
     api_key = config.get("api_key", "")
 
     if not api_key:
-        return JsonResponse({"error": "No PurpleAir API key configured"}, status=400)
+        return JsonResponse({"error": "No WAQI API token configured"}, status=400)
 
     if city:
         stations = services.load_stations(city)

@@ -315,8 +315,8 @@ async function fetchLive() {
     btnFetch.disabled = true;
     btnFetch.innerHTML = svgRefresh + " Fetching...";
     if (mapBtnFetch) mapBtnFetch.disabled = true;
-    statusEl.textContent = "Connecting to PurpleAir...";
-    showProgress("Fetching live data from PurpleAir...");
+    statusEl.textContent = "Fetching live station data...";
+    showProgress("Fetching live data from monitoring stations...");
     try {
         const resp = await fetch("/api/fetch/", { method: "POST", credentials: "same-origin" });
         const data = await resp.json();

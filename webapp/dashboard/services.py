@@ -335,10 +335,32 @@ def evaluate(stations, readings, previous_readings=None):
 
 
 # ---------------------------------------------------------------------------
-# PurpleAir
+# WAQI (World Air Quality Index) — aqicn.org
 # ---------------------------------------------------------------------------
 
-PURPLEAIR_BASE = "https://api.purpleair.com/v1"
+WAQI_BASE = "https://api.waqi.info"
+
+# US EPA PM2.5 AQI breakpoints for AQI → µg/m³ conversion
+_AQI_BREAKPOINTS = [
+    (0,   50,   0.0,   12.0),
+    (51,  100,  12.1,  35.4),
+    (101, 150,  35.5,  55.4),
+    (151, 200,  55.5,  150.4),
+    (201, 300,  150.5, 250.4),
+    (301, 400,  250.5, 350.4),
+    (401, 500,  350.5, 500.4),
+]
+
+
+def _aqi_to_ugm3(aqi):
+    """Convert PM2.5 AQI value to µg/m³ using US EPA breakpoints."""
+    if aqi <= 0:
+        return 0.0
+    for aqi_lo, aqi_hi, c_lo, c_hi in _AQI_BREAKPOINTS:
+        if aqi_lo <= aqi <= aqi_hi:
+            return round(((aqi - aqi_lo) * (c_hi - c_lo)) / (aqi_hi - aqi_lo) + c_lo, 1)
+    # Above 500 AQI — linear extrapolation
+    return round(aqi * 1.0, 1)
 
 
 def load_config():
@@ -348,7 +370,10 @@ def load_config():
     except (FileNotFoundError, json.JSONDecodeError):
         pass
     cfg = {}
-    if os.environ.get("PURPLEAIR_API_KEY"):
+    if os.environ.get("WAQI_API_TOKEN"):
+        cfg["api_key"] = os.environ["WAQI_API_TOKEN"]
+    # Fallback to legacy PurpleAir key name
+    elif os.environ.get("PURPLEAIR_API_KEY"):
         cfg["api_key"] = os.environ["PURPLEAIR_API_KEY"]
     return cfg
 
@@ -362,20 +387,15 @@ def _haversine(lat1, lon1, lat2, lon2):
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def _fetch_bbox(headers, nwlat, selat, nwlng, selng):
-    """Fetch PurpleAir sensors within a single bounding box. Returns list of sensor dicts."""
+def _fetch_waqi_bbox(token, lat1, lng1, lat2, lng2):
+    """Fetch WAQI stations within a bounding box. Returns list of station dicts."""
     try:
         resp = requests.get(
-            f"{PURPLEAIR_BASE}/sensors",
-            headers=headers,
+            f"{WAQI_BASE}/v2/map/bounds",
             params={
-                "fields": "latitude,longitude,pm2.5_cf_1",
-                "location_type": "0",  # outdoor only
-                "max_age": 3600,       # seen in last hour
-                "nwlat": nwlat,
-                "nwlng": nwlng,
-                "selat": selat,
-                "selng": selng,
+                "latlng": f"{lat1},{lng1},{lat2},{lng2}",
+                "networks": "all",
+                "token": token,
             },
             timeout=30,
         )
@@ -385,37 +405,35 @@ def _fetch_bbox(headers, nwlat, selat, nwlng, selng):
     except requests.RequestException:
         return []
 
-    fields = data.get("fields", [])
-    sensors = data.get("data", [])
-    if not fields or not sensors:
+    if data.get("status") != "ok":
         return []
 
-    fi = {f: i for i, f in enumerate(fields)}
     result = []
-    for row in sensors:
+    for entry in data.get("data", []):
         try:
-            pm = row[fi["pm2.5_cf_1"]]
-            if pm is None or pm < 0:
+            aqi_val = entry.get("aqi")
+            if aqi_val is None or aqi_val == "-" or int(aqi_val) < 0:
                 continue
+            lat = entry["lat"]
+            lon = entry["lon"]
+            pm25 = _aqi_to_ugm3(int(aqi_val))
             result.append({
-                "lat": row[fi["latitude"]],
-                "lon": row[fi["longitude"]],
-                "pm25": pm,
+                "lat": float(lat),
+                "lon": float(lon),
+                "pm25": pm25,
+                "name": entry.get("station", {}).get("name", ""),
             })
-        except (KeyError, IndexError, TypeError):
+        except (KeyError, TypeError, ValueError):
             continue
     return result
 
 
 def fetch_latest_pm25(api_key, stations):
-    """Fetch PM2.5 for stations using per-city PurpleAir bounding-box queries.
+    """Fetch PM2.5 for stations using per-city WAQI bounding-box queries.
 
-    Groups stations by target_city and makes one small bounding-box request
-    per city instead of one giant continental request — drastically reducing
-    the number of PurpleAir sensors returned (and API points consumed).
+    Groups stations by target_city and makes one bounding-box request
+    per city. WAQI returns AQI values which are converted to µg/m³.
     """
-    headers = {"X-API-Key": api_key}
-
     # Only stations with coordinates
     with_coords = [s for s in stations if s.get("lat") and s.get("lon")]
     if not with_coords:
@@ -433,24 +451,25 @@ def fetch_latest_pm25(api_key, stations):
     for city, city_stations in city_groups.items():
         lats = [s["lat"] for s in city_stations]
         lons = [s["lon"] for s in city_stations]
-        nwlat = max(lats) + pad
-        selat = min(lats) - pad
-        nwlng = min(lons) - pad
-        selng = max(lons) + pad
+        # WAQI bbox: lat1,lng1 = SW corner, lat2,lng2 = NE corner
+        lat1 = min(lats) - pad
+        lng1 = min(lons) - pad
+        lat2 = max(lats) + pad
+        lng2 = max(lons) + pad
 
-        pa_sensors = _fetch_bbox(headers, nwlat, selat, nwlng, selng)
-        if not pa_sensors:
+        waqi_stations = _fetch_waqi_bbox(api_key, lat1, lng1, lat2, lng2)
+        if not waqi_stations:
             continue
 
-        # Match each station to nearest PurpleAir sensor within 30 km
+        # Match each station to nearest WAQI station within 30 km
         for st in city_stations:
             best_dist = 30  # km max
             best_pm = None
-            for pa in pa_sensors:
-                d = _haversine(st["lat"], st["lon"], pa["lat"], pa["lon"])
+            for ws in waqi_stations:
+                d = _haversine(st["lat"], st["lon"], ws["lat"], ws["lon"])
                 if d < best_dist:
                     best_dist = d
-                    best_pm = pa["pm25"]
+                    best_pm = ws["pm25"]
             if best_pm is not None:
                 readings[st["id"]] = best_pm
 
