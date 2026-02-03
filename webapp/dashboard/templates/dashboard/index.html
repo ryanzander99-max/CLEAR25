@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}?v=3">
 </head>
 <body>
     <div class="app">
@@ -36,15 +36,18 @@
         <!-- ============================================================ -->
         <div id="tab-dashboard" class="tab-content tab-visible">
             <!-- Alert Banner -->
-            <div class="banner-wrap">
-                <div id="banner" class="banner">
-                    <div class="banner-glow"></div>
-                    <div class="banner-content">
-                        <div id="banner-title" class="banner-city">ALL CITIES</div>
-                        <div id="banner-level" class="banner-status">Waiting for data</div>
-                        <div id="banner-health" class="banner-health"></div>
+            <!-- City Alert Cards -->
+            <div class="city-cards" id="city-cards">
+                {% for city in cities %}
+                <div class="city-card" id="card-{{ city }}">
+                    <div class="city-card-glow"></div>
+                    <div class="city-card-content">
+                        <div class="city-card-name">{{ city }}</div>
+                        <div class="city-card-level">Waiting for data</div>
+                        <div class="city-card-detail"></div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
 
             <!-- Progress Bar -->
@@ -479,6 +482,6 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{% static 'dashboard/app.js' %}?v=2"></script>
+    <script src="{% static 'dashboard/app.js' %}?v=3"></script>
 </body>
 </html>

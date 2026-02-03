@@ -126,6 +126,67 @@ body {
 .tab-content { display: none; }
 .tab-visible { display: block; }
 
+/* ---- City Cards ---- */
+.city-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.city-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid #27272a;
+    background: #18181b;
+    padding: 20px;
+    transition: border-color 0.4s;
+}
+
+.city-card-glow {
+    position: absolute;
+    inset: 0;
+    opacity: 0.15;
+    background: radial-gradient(ellipse at 50% 0%, var(--card-color, #3b82f6) 0%, transparent 70%);
+    pointer-events: none;
+    transition: background 0.4s;
+}
+
+.city-card-content { position: relative; z-index: 1; }
+
+.city-card-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #a1a1aa;
+    margin-bottom: 6px;
+}
+
+.city-card-level {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fafafa;
+    transition: color 0.3s;
+}
+
+.city-card-detail {
+    font-size: 12px;
+    color: #71717a;
+    margin-top: 4px;
+    min-height: 16px;
+}
+
+@media (max-width: 900px) {
+    .city-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 500px) {
+    .city-cards { grid-template-columns: 1fr; }
+}
+
 /* ---- Banner ---- */
 .banner-wrap { margin-top: 24px; }
 

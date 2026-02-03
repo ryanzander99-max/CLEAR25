@@ -9,10 +9,6 @@ let mapMarkers = [];
 let lastResults = null;
 
 // DOM refs
-const banner = document.getElementById("banner");
-const bannerTitle = document.getElementById("banner-title");
-const bannerLevel = document.getElementById("banner-level");
-const bannerHealth = document.getElementById("banner-health");
 const tableBody = document.getElementById("table-body");
 const statusEl = document.getElementById("status");
 const btnFetch = document.getElementById("btn-fetch");
@@ -43,16 +39,6 @@ document.querySelectorAll(".rnav").forEach(btn => {
 });
 
 // ---- Dashboard functions ----
-function resetBanner() {
-    banner.style.setProperty("--banner-color", "#3b82f6");
-    banner.style.borderColor = "#27272a";
-    bannerLevel.textContent = "Waiting for data";
-    bannerLevel.style.color = "#fafafa";
-    bannerHealth.textContent = "";
-    bannerTitle.style.color = "#a1a1aa";
-    statsRow.style.display = "none";
-}
-
 async function loadStations() {
     try {
         const resp = await fetch("/api/stations/");
@@ -112,34 +98,60 @@ function renderTable(results) {
     </div>`;
 }
 
-function updateBanner(results) {
-    if (!results || results.length === 0) {
-        resetBanner();
-        bannerLevel.textContent = "No matching station data";
-        return;
+function updateCityCards(results) {
+    const cityNames = Object.keys(citiesInfo);
+
+    cityNames.forEach(city => {
+        const card = document.getElementById("card-" + city);
+        if (!card) return;
+        const levelEl = card.querySelector(".city-card-level");
+        const detailEl = card.querySelector(".city-card-detail");
+
+        if (!results || results.length === 0) {
+            card.style.setProperty("--card-color", "#3b82f6");
+            card.style.borderColor = "#27272a";
+            levelEl.textContent = "Waiting for data";
+            levelEl.style.color = "#fafafa";
+            detailEl.textContent = "";
+            return;
+        }
+
+        const cityResults = results.filter(r => r.target_city === city);
+        if (cityResults.length === 0) {
+            card.style.setProperty("--card-color", "#3b82f6");
+            card.style.borderColor = "#27272a";
+            levelEl.textContent = "No data";
+            levelEl.style.color = "#71717a";
+            detailEl.textContent = "";
+            return;
+        }
+
+        const worst = cityResults[0]; // already sorted by predicted desc
+        card.style.setProperty("--card-color", worst.level_hex);
+        card.style.borderColor = worst.level_hex + "44";
+        levelEl.textContent = `${worst.level_name}  ·  ${worst.predicted.toFixed(1)} µg/m³`;
+        levelEl.style.color = worst.level_hex;
+        detailEl.textContent = `via ${worst.station} · ${cityResults.length} stations`;
+    });
+
+    // Update stats row
+    if (results && results.length > 0) {
+        statsRow.style.display = "grid";
+        const worst = results[0];
+        document.getElementById("stat-worst").textContent = worst.predicted.toFixed(1);
+        document.getElementById("stat-worst").style.color = worst.level_hex;
+        document.getElementById("stat-reporting").textContent = results.length;
+        const tier1 = results.filter(r => r.tier === 1);
+        document.getElementById("stat-lead").textContent = tier1.length > 0 ? tier1[0].lead : results[0].lead;
+    } else {
+        statsRow.style.display = "none";
     }
-
-    const worst = results[0];
-    banner.style.setProperty("--banner-color", worst.level_hex);
-    banner.style.borderColor = worst.level_hex + "44";
-    bannerLevel.textContent = `${worst.level_name}  ·  ${worst.predicted.toFixed(1)} µg/m³  ·  ${worst.target_city || ""} via ${worst.station}`;
-    bannerLevel.style.color = worst.level_hex;
-    bannerHealth.textContent = worst.health;
-    bannerTitle.style.color = "#a1a1aa";
-
-    statsRow.style.display = "grid";
-    document.getElementById("stat-worst").textContent = worst.predicted.toFixed(1);
-    document.getElementById("stat-worst").style.color = worst.level_hex;
-    document.getElementById("stat-reporting").textContent = results.length;
-
-    const tier1 = results.filter(r => r.tier === 1);
-    document.getElementById("stat-lead").textContent = tier1.length > 0 ? tier1[0].lead : results[0].lead;
 }
 
 function handleResults(results, label) {
     lastResults = results;
     renderTable(results);
-    updateBanner(results);
+    updateCityCards(results);
     if (map) updateMapMarkers(results);
     const count = results ? results.length : 0;
     statusEl.textContent = `${label} · ${count} stations reporting`;
