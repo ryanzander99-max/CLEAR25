@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-key-change-in-production")
@@ -43,12 +42,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "ews.wsgi.application"
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default="sqlite:///db.sqlite3",
-        conn_max_age=600,
-    )
-}
+# Database — Supabase PostgreSQL via DATABASE_URL, fallback to SQLite for local dev
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+if DATABASE_URL:
+    # URL-encode the password portion to handle special characters
+    import urllib.parse as _urlparse
+    _parsed = _urlparse.urlparse(DATABASE_URL)
+    if _parsed.password:
+        _safe_password = _urlparse.quote(_parsed.password, safe="")
+        _netloc = f"{_parsed.username}:{_safe_password}@{_parsed.hostname}"
+        if _parsed.port:
+            _netloc += f":{_parsed.port}"
+        DATABASE_URL = _urlparse.urlunparse(
+            (_parsed.scheme, _netloc, _parsed.path, _parsed.params, _parsed.query, _parsed.fragment)
+        )
+    import dj_database_url
+    DATABASES = {
+        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+    }
+    DATABASES["default"].setdefault("OPTIONS", {})
+    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        }
+    }
 
 STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")

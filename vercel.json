@@ -1,5 +1,6 @@
 {
     "version": 2,
+    "buildCommand": "bash build_files.sh",
     "builds": [
         {
             "src": "webapp/ews/wsgi.py",
