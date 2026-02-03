@@ -18,10 +18,18 @@ def _ensure_migrated():
     if _migrated:
         return
     _migrated = True
+    needs_migrate = False
     try:
         from django.contrib.sites.models import Site
         Site.objects.get(id=1)
     except Exception:
+        needs_migrate = True
+    try:
+        from dashboard.models import ReadingSnapshot
+        ReadingSnapshot.objects.count()
+    except Exception:
+        needs_migrate = True
+    if needs_migrate:
         from django.core.management import call_command
         call_command("migrate", "--noinput")
         from django.contrib.sites.models import Site
