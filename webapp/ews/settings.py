@@ -45,20 +45,37 @@ WSGI_APPLICATION = "ews.wsgi.application"
 # Database — Supabase PostgreSQL via DATABASE_URL, fallback to SQLite for local dev
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 if DATABASE_URL:
-    # URL-encode the password to handle special characters that break urlparse.
-    # Format: scheme://user:password@host:port/dbname
-    import re as _re, urllib.parse as _urlquote
-    _m = _re.match(r'^([^:]+)://([^:]+):(.+)@(.+)$', DATABASE_URL)
+    # Parse the URL manually to avoid urlparse issues with special chars in passwords.
+    # Expected format: postgresql://user:password@host:port/dbname
+    import re as _re
+    # Use last @ as delimiter: password may contain @
+    # Username stops at first : after scheme://
+    # Password is everything between user: and the last @
+    _m = _re.match(r'^(\w+)://([^:]+):(.+)@([^@]+)$', DATABASE_URL)
     if _m:
-        _scheme, _user, _pw, _rest = _m.groups()
-        _safe_pw = _urlquote.quote(_pw, safe="")
-        DATABASE_URL = f"{_scheme}://{_user}:{_safe_pw}@{_rest}"
-    import dj_database_url
-    DATABASES = {
-        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-    }
-    DATABASES["default"].setdefault("OPTIONS", {})
-    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
+        _scheme, _user, _pw, _hostpath = _m.groups()
+        # Split host:port/dbname
+        _hp, _, _dbname = _hostpath.partition("/")
+        _host, _, _port = _hp.partition(":")
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": _dbname or "postgres",
+                "USER": _user,
+                "PASSWORD": _pw,
+                "HOST": _host,
+                "PORT": _port or "5432",
+                "CONN_MAX_AGE": 600,
+                "OPTIONS": {"sslmode": "require"},
+            }
+        }
+    else:
+        import dj_database_url
+        DATABASES = {
+            "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+        }
+        DATABASES["default"].setdefault("OPTIONS", {})
+        DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
 else:
     DATABASES = {
         "default": {
