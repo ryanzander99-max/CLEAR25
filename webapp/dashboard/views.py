@@ -36,7 +36,6 @@ def api_demo(request, city=None):
     return JsonResponse({"results": result["stations"], "city_alerts": result["city_alerts"]})
 
 
-@csrf_exempt
 def api_fetch(request, city=None):
     if not request.user.is_authenticated:
         return JsonResponse({"error": "Login required to fetch live data", "auth_required": True}, status=401)

@@ -318,7 +318,11 @@ async function fetchLive() {
     statusEl.textContent = "Fetching live station data...";
     showProgress("Fetching live data from monitoring stations...");
     try {
-        const resp = await fetch("/api/fetch/", { method: "POST", credentials: "same-origin" });
+        const resp = await fetch("/api/fetch/", { credentials: "same-origin" });
+        const contentType = resp.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+            throw new Error(`Server returned ${resp.status} (not JSON). Are you logged in?`);
+        }
         const data = await resp.json();
         if (resp.status === 401) {
             showToast("Please log in to fetch live data");
