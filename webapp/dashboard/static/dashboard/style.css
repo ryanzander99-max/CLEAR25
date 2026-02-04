@@ -708,22 +708,46 @@ body {
     background: #18181b;
     position: relative;
     z-index: 1;
+    /* Create isolated stacking context to contain all Leaflet z-indexes */
+    isolation: isolate;
 }
 
-/* Constrain Leaflet map z-index to prevent overlap with sidebar/modals */
-.map-container .leaflet-pane,
-.map-container .leaflet-control,
+/* Force all Leaflet elements to stay within map container's stacking context */
+.map-container .leaflet-pane {
+    z-index: 1 !important;
+}
+
+.map-container .leaflet-tile-pane {
+    z-index: 1 !important;
+}
+
+.map-container .leaflet-overlay-pane {
+    z-index: 2 !important;
+}
+
+.map-container .leaflet-shadow-pane {
+    z-index: 3 !important;
+}
+
+.map-container .leaflet-marker-pane {
+    z-index: 4 !important;
+}
+
+.map-container .leaflet-tooltip-pane {
+    z-index: 5 !important;
+}
+
+.map-container .leaflet-popup-pane {
+    z-index: 6 !important;
+}
+
 .map-container .leaflet-top,
 .map-container .leaflet-bottom {
-    z-index: auto !important;
+    z-index: 10 !important;
 }
 
 .map-container .leaflet-control {
-    z-index: 100 !important;
-}
-
-.leaflet-popup {
-    z-index: 200 !important;
+    z-index: 10 !important;
 }
 
 .map-legend {
