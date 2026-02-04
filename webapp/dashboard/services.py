@@ -226,11 +226,39 @@ def lead_time_str(tier, dist):
     return "6-12 hrs"
 
 
+def _weighted_prediction(city_rows):
+    """Calculate R-value weighted average prediction for a city.
+
+    Stations with higher R-values (better correlation) have more influence.
+    Uses R² as weight to emphasize high-correlation stations even more.
+    Falls back to simple average if no valid R-values.
+    """
+    weighted_sum = 0.0
+    weight_total = 0.0
+
+    for r in city_rows:
+        R = r.get("R", 0)
+        pred = r["predicted"]
+        # Use R² as weight (squares emphasize high-R stations)
+        # Minimum weight of 0.1 to include all stations somewhat
+        weight = max(R * R, 0.1)
+        weighted_sum += weight * pred
+        weight_total += weight
+
+    if weight_total > 0:
+        return weighted_sum / weight_total
+    # Fallback to simple average
+    return sum(r["predicted"] for r in city_rows) / len(city_rows) if city_rows else 0
+
+
 def evaluate(stations, readings, previous_readings=None):
     """Evaluate stations and check alert rules.
 
     previous_readings: dict of {station_id: pm25} from the previous hour,
                        used for Rule 2 (dual-station sustained check).
+
+    Predictions are weighted by R-value (correlation coefficient) so that
+    more reliable stations have greater influence on city-level predictions.
     """
     if previous_readings is None:
         previous_readings = {}
@@ -267,15 +295,17 @@ def evaluate(stations, readings, previous_readings=None):
     for city, city_rows in city_results.items():
         alert_triggered = False
         trigger_rule = None
-        max_predicted = 0.0
+
+        # Calculate R-weighted prediction for this city
+        weighted_pred = _weighted_prediction(city_rows)
+        max_predicted = max((r["predicted"] for r in city_rows), default=0)
 
         # Rule 1: any station >= 55 µg/m³
         for r in city_rows:
             if r["pm25"] >= RULE1_THRESHOLD:
                 alert_triggered = True
                 trigger_rule = "rule1"
-                if r["predicted"] > max_predicted:
-                    max_predicted = r["predicted"]
+                break
 
         # Rule 2: dual-station sustained (needs previous readings)
         if not alert_triggered and previous_readings:
@@ -301,18 +331,20 @@ def evaluate(stations, readings, previous_readings=None):
                 if alert_triggered:
                     break
 
-        if alert_triggered and max_predicted == 0.0:
-            # Use highest predicted value from any station in this city
-            max_predicted = max((r["predicted"] for r in city_rows), default=0)
+        # Use weighted prediction for city-level alert determination
+        # This gives more weight to stations with higher R-values (better correlation)
+        alert_prediction = weighted_pred
 
         if alert_triggered:
-            lvl = get_alert_level(max_predicted)
+            lvl = get_alert_level(alert_prediction)
             # Only issue alert if predicted >= 31 (MODERATE or above)
             if lvl["name"] != "NONE":
                 city_alerts[city] = {
                     "alert": True,
                     "rule": trigger_rule,
-                    "predicted_pm25": round(max_predicted, 1),
+                    "predicted_pm25": round(alert_prediction, 1),
+                    "weighted_pm25": round(weighted_pred, 1),
+                    "max_pm25": round(max_predicted, 1),
                     "level_name": lvl["name"],
                     "level_hex": lvl["hex"],
                     "level_text_color": lvl["text_color"],
@@ -324,7 +356,9 @@ def evaluate(stations, readings, previous_readings=None):
             city_alerts[city] = {
                 "alert": False,
                 "rule": None,
-                "predicted_pm25": round(max((r["predicted"] for r in city_rows), default=0), 1),
+                "predicted_pm25": round(weighted_pred, 1),
+                "weighted_pm25": round(weighted_pred, 1),
+                "max_pm25": round(max_predicted, 1),
                 "level_name": none_lvl["name"],
                 "level_hex": none_lvl["hex"],
                 "level_text_color": none_lvl["text_color"],
