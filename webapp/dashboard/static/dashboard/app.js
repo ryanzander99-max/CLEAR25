@@ -16,10 +16,10 @@ const statsRow = document.getElementById("stats-row");
 const stationCount = document.getElementById("station-count");
 const mapStatus = document.getElementById("map-status");
 
-// ---- Tab switching ----
-document.querySelectorAll(".tab").forEach(t => {
+// ---- Tab switching (sidebar) ----
+document.querySelectorAll(".sidebar-tab").forEach(t => {
     t.addEventListener("click", () => {
-        document.querySelector(".tab-active").classList.remove("tab-active");
+        document.querySelector(".sidebar-tab.tab-active")?.classList.remove("tab-active");
         t.classList.add("tab-active");
         document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("tab-visible"));
         document.getElementById("tab-" + t.dataset.tab).classList.add("tab-visible");

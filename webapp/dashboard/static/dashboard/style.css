@@ -24,52 +24,187 @@ body {
     min-height: 100vh;
 }
 
+/* ---- App Layout with Sidebar ---- */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 72px;
+    background: linear-gradient(to bottom, #111113, #0a0a0b);
+    border-right: 1px solid #1f1f23;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 100;
+}
+
+.sidebar-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.sidebar-brand {
+    padding: 8px;
+}
+
+.sidebar-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+}
+
+.sidebar-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 12px;
+}
+
+.sidebar-tab {
+    all: unset;
+    cursor: pointer;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #52525b;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.sidebar-tab svg {
+    transition: transform 0.2s ease;
+}
+
+.sidebar-tab:hover {
+    color: #a1a1aa;
+    background: rgba(255,255,255,0.05);
+}
+
+.sidebar-tab:hover svg {
+    transform: scale(1.1);
+}
+
+.sidebar-tab.tab-active {
+    color: #fff;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.sidebar-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 12px;
+}
+
+.sidebar-account {
+    all: unset;
+    cursor: pointer;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.sidebar-account:hover {
+    transform: scale(1.08);
+}
+
+.sidebar-signin {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #71717a;
+    transition: all 0.2s ease;
+    background: rgba(255,255,255,0.03);
+}
+
+.sidebar-signin:hover {
+    color: #fafafa;
+    background: rgba(255,255,255,0.08);
+}
+
+.account-dropdown-up .account-menu {
+    bottom: calc(100% + 12px);
+    top: auto;
+    left: calc(100% + 12px);
+    right: auto;
+}
+
+.main-content {
+    flex: 1;
+    margin-left: 72px;
+    max-width: 1120px;
+    padding: 24px 32px 40px;
+}
+
+/* Legacy .app class - keep for compatibility */
 .app {
     max-width: 1120px;
     margin: 0 auto;
     padding: 0 20px 40px;
 }
 
-/* ---- Nav ---- */
+/* ---- Old Nav (hidden, kept for reference) ---- */
 .nav {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    background: rgba(9, 9, 11, 0.85);
-    border-bottom: 1px solid #27272a;
-    margin: 0 -20px;
-    padding: 0 20px;
+    display: none;
 }
 
-.nav-inner {
-    max-width: 1120px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    gap: 16px;
+/* Main tabs (legacy) */
+.nav-tabs, .tab {
+    display: none;
 }
 
-.nav-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
+/* Sidebar tab tooltips */
+.sidebar-tab::after {
+    content: attr(title);
+    position: absolute;
+    left: calc(100% + 12px);
+    background: #18181b;
+    border: 1px solid #27272a;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #fafafa;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.15s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-.nav-logo {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
+.sidebar-tab:hover::after {
+    opacity: 1;
+    visibility: visible;
 }
 
-.nav-icon { font-size: 22px; line-height: 1; }
+/* Placeholder to maintain structure */
+.nav-inner, .nav-brand, .nav-logo {
+    display: none;
+}
 
-/* Main tabs */
-.nav-tabs {
+/* Keep these for account dropdown */
+.nav-tabs-placeholder {
     display: flex;
     gap: 4px;
     background: linear-gradient(to bottom, #1a1a1e, #141416);
