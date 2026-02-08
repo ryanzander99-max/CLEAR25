@@ -192,6 +192,7 @@ function renderTable(results) {
 
         html += `<div class="row${hasData ? "" : " no-data"}">
             <span class="td-city">${city}</span>
+            <span class="td-id">${st.id}</span>
             <span class="td-station">${st.city_name}</span>
             <span class="td-dist">${st.distance.toFixed(0)} km</span>
             <span class="td-dir">${st.direction}</span>

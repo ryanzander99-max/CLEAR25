@@ -884,6 +884,7 @@ body {
 .table-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
 
 .th-city,    .td-city    { width: 90px; font-weight: 600; color: #fff; font-size: 12px; }
+.th-id,      .td-id      { width: 90px; font-size: 11px; color: #71717a; font-family: 'JetBrains Mono', monospace; }
 .th-station, .td-station { flex: 2; min-width: 140px; }
 .th-dist,    .td-dist    { width: 80px; text-align: right; }
 .th-dir,     .td-dir     { width: 50px; text-align: center; }

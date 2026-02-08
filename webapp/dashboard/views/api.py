@@ -101,8 +101,18 @@ def api_v1_live(request):
         timestamp = None
         age_seconds = None
 
-    # Format stations for API
-    stations = [_format_station_for_api(r) for r in results]
+    # Filter out excluded stations
+    results = [r for r in results if r.get("id") not in services.EXCLUDED_STATION_IDS]
+
+    # Allow filtering by station ID via ?station=<id>
+    station_id = request.GET.get("station")
+    if station_id:
+        results = [r for r in results if r.get("id") == station_id]
+        if not results:
+            return JsonResponse({"error": f"Station '{station_id}' not found"}, status=404)
+
+    # Format stations for API (limit to 1 per request)
+    stations = [_format_station_for_api(r) for r in results[:1]]
 
     return JsonResponse({
         "stations": stations,
