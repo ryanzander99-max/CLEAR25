@@ -917,6 +917,7 @@ function timeAgo(isoString) {
 let apiKeysLoaded = false;
 let apiKeyTimers = {}; // Store reset times for countdown
 let apiKeyTimerInterval = null;
+let apiKeyRefreshInterval = null; // Auto-refresh interval
 
 // Accent colors for API keys (Vercel-style dark backgrounds)
 const API_KEY_COLORS = [
@@ -1036,10 +1037,10 @@ async function loadApiKeys() {
                 <div style="padding:8px 16px 12px;border-top:1px solid ${accentColor.border}20;background:rgba(0,0,0,0.2);">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                         <span style="font-size:11px;color:#71717a;">Rate Limit</span>
-                        <span style="font-size:11px;color:${usageColor};font-family:'JetBrains Mono',monospace;">${k.requests_used}/${k.rate_limit} requests/hr</span>
+                        <span id="usage-${keyId}" style="font-size:11px;color:${usageColor};font-family:'JetBrains Mono',monospace;">${k.requests_used}/${k.rate_limit} requests/hr</span>
                     </div>
                     <div style="height:4px;background:#27272a;border-radius:2px;overflow:hidden;">
-                        <div style="height:100%;width:${usagePercent}%;background:${usageColor};border-radius:2px;transition:width 0.3s;"></div>
+                        <div id="bar-${keyId}" style="height:100%;width:${usagePercent}%;background:${usageColor};border-radius:2px;transition:width 0.3s;"></div>
                     </div>
                     <div id="timer-${keyId}" style="font-size:10px;color:${timerColor};margin-top:4px;">${timerText}</div>
                 </div>
@@ -1087,6 +1088,17 @@ function startApiKeyTimers() {
                 timerEl.textContent = "Ready · Rate limit reset";
                 timerEl.style.color = "#22c55e";
                 timerData.active = false; // Mark as inactive
+                // Reset the bar to 0 when timer expires
+                const barEl = document.getElementById(`bar-${keyId}`);
+                const usageEl = document.getElementById(`usage-${keyId}`);
+                if (barEl) {
+                    barEl.style.width = "0%";
+                    barEl.style.background = "#22c55e";
+                }
+                if (usageEl) {
+                    usageEl.textContent = "0/100 requests/hr";
+                    usageEl.style.color = "#22c55e";
+                }
             } else {
                 allExpiredOrInactive = false;
                 const seconds = Math.floor(remainingMs / 1000);
@@ -1252,10 +1264,24 @@ function initApiKeyModals() {
 // Load API keys when switching to API tab
 document.querySelectorAll(".sidebar-tab").forEach(t => {
     t.addEventListener("click", () => {
-        if (t.dataset.tab === "api" && !apiKeysLoaded) {
-            apiKeysLoaded = true;
+        if (t.dataset.tab === "api") {
+            if (!apiKeysLoaded) {
+                apiKeysLoaded = true;
+                initApiKeyModals();
+            }
             loadApiKeys();
-            initApiKeyModals();
+            // Start auto-refresh every 30 seconds when on API tab
+            if (apiKeyRefreshInterval) clearInterval(apiKeyRefreshInterval);
+            apiKeyRefreshInterval = setInterval(() => {
+                console.log("[API Keys] Auto-refreshing...");
+                loadApiKeys();
+            }, 30000);
+        } else {
+            // Stop auto-refresh when leaving API tab
+            if (apiKeyRefreshInterval) {
+                clearInterval(apiKeyRefreshInterval);
+                apiKeyRefreshInterval = null;
+            }
         }
     });
 });
