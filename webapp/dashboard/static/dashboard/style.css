@@ -53,7 +53,7 @@ body {
     top: 0;
     left: 0;
     height: 100vh;
-    z-index: 1000;
+    z-index: 900;
 }
 
 .sidebar-top {
@@ -177,6 +177,8 @@ body {
     margin-left: 160px;
     padding: 24px 32px 40px;
     width: calc(100% - 160px);
+    position: relative;
+    z-index: 1;
 }
 
 /* Legacy classes */
