@@ -15,6 +15,9 @@ from .core import (
     logout_view,
 )
 
+# Landing page
+from .landing import landing_page
+
 # Feedback board views
 from .feedback import (
     api_suggestions,
@@ -37,6 +40,8 @@ from .health import health_check
 
 # Export all for `from dashboard.views import *`
 __all__ = [
+    # Landing
+    "landing_page",
     # Core
     "index",
     "api_stations",
