@@ -6,6 +6,11 @@
    BASE STYLES — Reset, layout, sidebar, navigation
    ============================================================ */
 
+:root {
+    --accent-color: #71717a;
+    --accent-text: #fff;
+}
+
 *,
 *::before,
 *::after {
@@ -98,9 +103,10 @@ body {
 .sidebar-tab:hover svg { transform: scale(1.1); }
 
 .sidebar-tab.tab-active {
-    color: #000;
-    background: #fff;
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+    color: var(--accent-text, #000);
+    background: var(--accent-color, #71717a);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-color, #71717a) 40%, transparent);
+    transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .sidebar-bottom {
@@ -217,14 +223,15 @@ body {
 .account-avatar {
     width: 32px;
     height: 32px;
-    background: #fff;
+    background: var(--accent-color, #71717a);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
     font-size: 14px;
-    color: #fff;
+    color: var(--accent-text, #000);
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .account-btn svg { color: #71717a; }
@@ -335,8 +342,8 @@ body {
     transition: all 0.15s;
 }
 
-.action-primary { background: #fff; color: #000; }
-.action-primary:hover { background: rgba(255,255,255,0.85); }
+.action-primary { background: var(--accent-color, #71717a); color: var(--accent-text, #000); transition: background 0.3s ease, color 0.3s ease; }
+.action-primary:hover { filter: brightness(0.9); }
 .action-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .action-ghost { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
 .action-ghost:hover { background: rgba(255,255,255,0.15); }
@@ -499,13 +506,14 @@ body {
 .auth-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
 .auth-link-primary {
-    color: #000;
-    background: #fff;
+    color: var(--accent-text, #000);
+    background: var(--accent-color, #71717a);
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .auth-link-primary:hover {
-    background: rgba(255,255,255,0.85);
-    color: #000;
+    filter: brightness(0.9);
+    color: var(--accent-text, #000);
 }
 
 .auth-page {
@@ -584,17 +592,17 @@ body {
     width: 100%;
     text-align: center;
     padding: 11px;
-    background: #fff;
-    color: #000;
+    background: var(--accent-color, #71717a);
+    color: var(--accent-text, #000);
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     font-weight: 600;
     border-radius: 10px;
     margin-top: 8px;
-    transition: background 0.15s;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
-.auth-submit:hover { background: rgba(255,255,255,0.85); }
+.auth-submit:hover { filter: brightness(0.9); }
 
 .auth-footer {
     text-align: center;
@@ -680,9 +688,9 @@ body {
 .progress-fill {
     height: 100%;
     width: 0%;
-    background: #fff;
+    background: var(--accent-color, #71717a);
     border-radius: 3px;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, background 0.3s ease;
 }
 
 /* ---- Empty State ---- */
@@ -883,8 +891,9 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #fff;
+    color: var(--accent-color, #71717a);
     border-top: 1px solid rgba(255,255,255,0.08);
+    transition: color 0.3s ease;
 }
 
 .tier-sep:first-child { border-top: none; }
@@ -1110,12 +1119,13 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #fff;
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: var(--accent-color, #71717a);
+    background: color-mix(in srgb, var(--accent-color, #71717a) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-color, #71717a) 25%, transparent);
     padding: 4px 12px;
     border-radius: 6px;
     margin-bottom: 16px;
+    transition: color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
 }
 
 .research-h1 {
@@ -1165,16 +1175,17 @@ body {
 .research-card strong { color: #e4e4e7; }
 
 .research-quote {
-    border-left: 3px solid #fff;
+    border-left: 3px solid var(--accent-color, #71717a);
     padding: 16px 20px;
     margin: 16px 0;
-    background: rgba(59, 130, 246, 0.05);
+    background: color-mix(in srgb, var(--accent-color, #71717a) 5%, transparent);
     border-radius: 0 10px 10px 0;
     font-size: 16px;
     font-weight: 600;
     color: #d4d4d8;
     line-height: 1.5;
     font-style: italic;
+    transition: border-color 0.3s ease, background 0.3s ease;
 }
 
 .research-subtitle {
@@ -1205,7 +1216,8 @@ body {
     font-family: 'JetBrains Mono', monospace;
     font-size: 22px;
     font-weight: 700;
-    color: #fff;
+    color: var(--accent-color, #71717a);
+    transition: color 0.3s ease;
 }
 
 .key-stat-label {
@@ -1220,17 +1232,19 @@ body {
 .stat-highlight {
     text-align: center;
     padding: 24px;
-    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.02));
-    border: 1px solid rgba(59,130,246,0.15);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent-color, #71717a) 15%, transparent), color-mix(in srgb, var(--accent-color, #71717a) 5%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent-color, #71717a) 25%, transparent);
     border-radius: 12px;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .stat-highlight-value {
     font-family: 'JetBrains Mono', monospace;
     font-size: 48px;
     font-weight: 800;
-    color: #fff;
+    color: var(--accent-color, #71717a);
     letter-spacing: -0.03em;
+    transition: color 0.3s ease;
 }
 
 .stat-highlight-label {
@@ -1284,7 +1298,8 @@ body {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #fff;
+    background: var(--accent-color, #71717a);
+    transition: background 0.3s ease;
 }
 
 .method-list li strong { color: #e4e4e7; }
@@ -1337,7 +1352,7 @@ body {
 .research-table tr:last-child td { border-bottom: none; }
 
 .research-table .total-row td {
-    background: rgba(59, 130, 246, 0.05);
+    background: color-mix(in srgb, var(--accent-color, #71717a) 8%, transparent);
     border-top: 1px solid rgba(255,255,255,0.15);
 }
 
@@ -1361,8 +1376,9 @@ body {
 .conclusion-item h3 {
     font-size: 14px;
     font-weight: 700;
-    color: #fff;
+    color: var(--accent-color, #71717a);
     margin-bottom: 6px;
+    transition: color 0.3s ease;
 }
 
 .conclusion-item p {
