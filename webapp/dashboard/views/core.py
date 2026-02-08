@@ -87,8 +87,10 @@ def api_live(request):
     try:
         cached = CachedResult.objects.get(key="latest")
         age_seconds = (timezone.now() - cached.timestamp).total_seconds()
+        # Filter out any excluded stations from cached results
+        results = [r for r in (cached.results or []) if r.get("id") not in services.EXCLUDED_STATION_IDS]
         response_data = {
-            "results": cached.results,
+            "results": results,
             "city_alerts": cached.city_alerts,
             "timestamp": cached.timestamp.isoformat(),
             "age_seconds": int(age_seconds),
