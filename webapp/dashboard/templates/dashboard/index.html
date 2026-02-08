@@ -233,8 +233,8 @@
                                 <div class="key-stat-label">Hourly Observations</div>
                             </div>
                             <div class="key-stat">
-                                <div class="key-stat-value">166</div>
-                                <div class="key-stat-label">Stations Identified</div>
+                                <div class="key-stat-value">162</div>
+                                <div class="key-stat-label">Active Stations</div>
                             </div>
                             <div class="key-stat">
                                 <div class="key-stat-value">4 Cities</div>
@@ -297,7 +297,7 @@
                     <div class="research-card">
                         <h2>Data Sources &amp; Analysis</h2>
                         <ul class="method-list">
-                            <li><strong>NAPS Network:</strong> 166 Canadian stations providing hourly PM2.5 measurements</li>
+                            <li><strong>NAPS Network:</strong> 162 active Canadian stations providing hourly PM2.5 measurements (166 identified, 4 excluded for distance)</li>
                             <li><strong>U.S. EPA AQS:</strong> Border stations in NY, PA, VT, WA, OR for cross-border smoke</li>
                             <li><strong>Study period:</strong> 2003–2023 (21 years of wildfire seasons)</li>
                             <li><strong>Regression model:</strong> PM2.5<sub>city</sub> = slope &times; PM2.5<sub>station</sub> + intercept</li>
@@ -481,7 +481,7 @@
                         <div class="equation">PM2.5<sub>city</sub> = slope &times; PM2.5<sub>station</sub> + intercept</div>
                         <p>Alert thresholds at each station are computed by inverting the formula:</p>
                         <div class="equation">station threshold = (alert trigger &minus; intercept) &divide; slope</div>
-                        <p>When a station's live PM2.5 reading exceeds its computed threshold, the corresponding alert is triggered — providing advance warning based on the station's distance and tier classification.</p>
+                        <p>When a station's live PM2.5 reading exceeds its computed threshold, the corresponding alert is triggered — providing advance warning based on the station's distance and tier classification. Each station is identified by its NAPS ID (visible on the dashboard and live map) and can be queried individually via the API.</p>
                     </div>
                 </div>
 
@@ -513,9 +513,10 @@
                         <ul class="method-list">
                             <li><strong>Satellite integration</strong> for real-time smoke plume tracking</li>
                             <li><strong>More cities</strong> added to the network</li>
-                            <li><strong>Live testing</strong> during upcoming wildfire seasons</li>
+                            <li><strong>Live season validation</strong> during upcoming 2026 wildfire season</li>
                             <li><strong>Expanded NAPS coverage</strong> to address monitoring gaps (e.g., Edmonton NNW)</li>
                             <li><strong>Wind direction/speed</strong> incorporation for improved predictions</li>
+                            <li><strong>Public API</strong> — already live at <code>/api/v1/</code> with station-level queries</li>
                         </ul>
                     </div>
                     <div class="research-card">
@@ -751,13 +752,22 @@
                                 <code class="endpoint-path">/api/v1/live/</code>
                             </div>
                             <div class="endpoint-body">
-                                <p style="color:#a1a1aa;margin-bottom:12px;">Get current PM2.5 readings and 1-hour predictions for all stations.</p>
+                                <p style="color:#a1a1aa;margin-bottom:12px;">Get current PM2.5 reading and prediction for one station. Returns the highest-predicted station by default.</p>
+                                <div class="response-label">Parameters</div>
+                                <table class="research-table" style="width:100%;margin-bottom:16px;">
+                                    <thead>
+                                        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><code>station</code></td><td>string</td><td style="color:#a1a1aa;">Filter by station ID (e.g. <code>?station=60106</code>). If omitted, returns the station with the highest predicted PM2.5.</td></tr>
+                                    </tbody>
+                                </table>
                                 <div class="response-label">Response</div>
                                 <pre>{
   "stations": [
     {
       "id": "60106",
-      "name": "Station Name",
+      "name": "Abbotsford A Columbia Street",
       "city": "Toronto",
       "lat": 43.6591,
       "lon": -79.3802,
@@ -765,11 +775,11 @@
       "predicted": 52.1,
       "level": 2,
       "level_name": "MODERATE",
-      "health_advisory": "..."
+      "health_advisory": "Sensitive groups should reduce outdoor activity."
     }
   ],
-  "count": 50,
-  "timestamp": "2025-02-07T10:30:00Z",
+  "count": 1,
+  "timestamp": "2026-02-08T10:30:00Z",
   "age_seconds": 120
 }</pre>
                             </div>
@@ -782,7 +792,33 @@
                                 <code class="endpoint-path">/api/v1/stations/</code>
                             </div>
                             <div class="endpoint-body">
-                                <p style="color:#a1a1aa;">Get list of all monitoring stations. Optional <code>?city=Toronto</code> filter.</p>
+                                <p style="color:#a1a1aa;margin-bottom:12px;">Get list of all monitoring stations with metadata.</p>
+                                <div class="response-label">Parameters</div>
+                                <table class="research-table" style="width:100%;margin-bottom:16px;">
+                                    <thead>
+                                        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><code>city</code></td><td>string</td><td style="color:#a1a1aa;">Filter by target city (e.g. <code>?city=Toronto</code>). Options: Toronto, Montreal, Edmonton, Vancouver.</td></tr>
+                                    </tbody>
+                                </table>
+                                <div class="response-label">Response</div>
+                                <pre>{
+  "stations": [
+    {
+      "id": "60106",
+      "name": "Abbotsford A Columbia Street",
+      "target_city": "Toronto",
+      "lat": 43.6591,
+      "lon": -79.3802,
+      "distance_km": 341.2,
+      "direction": "NE",
+      "tier": 1
+    }
+  ],
+  "count": 162,
+  "cities": ["Toronto", "Montreal", "Edmonton", "Vancouver"]
+}</pre>
                             </div>
                         </div>
 
@@ -793,7 +829,17 @@
                                 <code class="endpoint-path">/api/v1/cities/</code>
                             </div>
                             <div class="endpoint-body">
-                                <p style="color:#a1a1aa;">Get list of supported cities with coordinates.</p>
+                                <p style="color:#a1a1aa;margin-bottom:12px;">Get list of supported cities with coordinates and alert status.</p>
+                                <div class="response-label">Response</div>
+                                <pre>{
+  "cities": {
+    "Toronto": { "lat": 43.7479, "lon": -79.2741 },
+    "Montreal": { "lat": 45.5027, "lon": -73.6639 },
+    "Edmonton": { "lat": 53.5482, "lon": -113.3681 },
+    "Vancouver": { "lat": 49.3686, "lon": -123.2767 }
+  },
+  "count": 4
+}</pre>
                             </div>
                         </div>
                     </div>
@@ -802,9 +848,11 @@
                     <div class="research-card">
                         <h2 class="research-subtitle">Rate Limits & Errors</h2>
                         <ul class="method-list">
-                            <li><strong>100 requests per hour</strong> — limit applies per API key, not per user</li>
-                            <li>Data refreshes every 30 minutes</li>
+                            <li><strong>100 requests per hour</strong> (Free) / <strong>1,000</strong> (Pro) / <strong>10,000</strong> (Business) — per API key</li>
+                            <li><strong>1 station per request</strong> on <code>/api/v1/live/</code> — use <code>?station=</code> to select</li>
+                            <li>Data refreshes every <strong>30 minutes</strong> via automated server-side collection</li>
                             <li><code>401</code> — Missing or invalid API key</li>
+                            <li><code>404</code> — Station not found (invalid <code>?station=</code> ID)</li>
                             <li><code>429</code> — Rate limit exceeded (check <code>X-RateLimit-Reset</code> header)</li>
                         </ul>
                         <p style="margin-top:12px;color:#71717a;font-size:13px;">Rate limit headers are included in all API responses: <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>, <code>X-RateLimit-Reset</code></p>
@@ -1007,6 +1055,7 @@
                                 </thead>
                                 <tbody>
                                     <tr><td style="color:#fff;font-weight:500;">Rate Limit</td><td>100 / hr</td><td>1,000 / hr</td><td>10,000 / hr</td></tr>
+                                    <tr><td style="color:#fff;font-weight:500;">Stations per Request</td><td>1</td><td>1</td><td>1</td></tr>
                                     <tr><td style="color:#fff;font-weight:500;">API Keys</td><td>1</td><td>5</td><td>20</td></tr>
                                     <tr><td style="color:#fff;font-weight:500;">Live Data</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
                                     <tr><td style="color:#fff;font-weight:500;">Station Data</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
