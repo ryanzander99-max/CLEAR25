@@ -54,7 +54,7 @@ body {
     left: 0;
     height: 100vh;
     z-index: 9000;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .sidebar-top {
@@ -136,18 +136,23 @@ body {
 
 .sidebar-account {
     all: unset;
+    box-sizing: border-box;
     cursor: pointer;
     width: 100%;
+    max-width: 144px;
     height: 36px;
     border-radius: 6px;
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 0 10px;
-    transition: background 0.15s ease;
+    color: #71717a;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s ease;
 }
 
-.sidebar-account:hover { background: rgba(255,255,255,0.05); }
+.sidebar-account:hover { color: #fafafa; background: rgba(255,255,255,0.05); }
 
 .sidebar-signin {
     width: 100%;
