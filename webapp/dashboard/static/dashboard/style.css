@@ -53,7 +53,7 @@ body {
     top: 0;
     left: 0;
     height: 100vh;
-    z-index: 900;
+    z-index: 9000;
 }
 
 .sidebar-top {
@@ -121,9 +121,8 @@ body {
     flex-direction: column;
     align-items: stretch;
     padding: 0 8px;
-    border-top: 1px solid rgba(255,255,255,0.08);
     margin-top: auto;
-    padding-top: 8px;
+    padding-top: 12px;
 }
 
 .sidebar-account {
@@ -179,6 +178,7 @@ body {
     width: calc(100% - 160px);
     position: relative;
     z-index: 1;
+    overflow-x: hidden;
 }
 
 /* Legacy classes */
