@@ -25,3 +25,8 @@ staticfiles/
 
 # Claude
 .claude/
+
+# Capacitor / Node
+node_modules/
+ios/
+android/

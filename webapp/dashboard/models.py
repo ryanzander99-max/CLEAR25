@@ -141,6 +141,26 @@ class Comment(models.Model):
         ]
 
 
+class DeviceToken(models.Model):
+    """Push notification device tokens for iOS/Android."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="devices", null=True, blank=True)
+    token = models.CharField(max_length=255, unique=True, db_index=True)
+    platform = models.CharField(max_length=10, default="ios")  # ios, android, web
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    # Subscription preferences
+    cities = models.JSONField(default=list)  # List of cities to get alerts for, empty = all
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['is_active', 'platform']),
+        ]
+
+    def __str__(self):
+        return f"{self.platform}: {self.token[:20]}..."
+
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

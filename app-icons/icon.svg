@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#09090b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+
+  <!-- Outer ring -->
+  <circle cx="512" cy="512" r="352" fill="none" stroke="#404040" stroke-width="32"/>
+
+  <!-- Middle ring -->
+  <circle cx="512" cy="512" r="240" fill="none" stroke="#808080" stroke-width="40"/>
+
+  <!-- Inner ring -->
+  <circle cx="512" cy="512" r="128" fill="none" stroke="#ffffff" stroke-width="48"/>
+
+  <!-- Core dot -->
+  <circle cx="512" cy="512" r="48" fill="#ffffff"/>
+
+  <!-- Sweep line (radar style) -->
+  <line x1="512" y1="512" x2="512" y2="160" stroke="#ffffff" stroke-width="32" stroke-linecap="round"/>
+</svg>

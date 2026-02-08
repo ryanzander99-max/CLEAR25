@@ -16,7 +16,7 @@ from .core import (
 )
 
 # Landing page
-from .landing import landing_page
+from .landing import landing_page, privacy_page
 
 # Feedback board views
 from .feedback import (
@@ -46,12 +46,15 @@ from .api import (
     api_docs,
     api_create_key,
     api_revoke_key,
+    api_register_device,
+    api_unregister_device,
 )
 
 # Export all for `from dashboard.views import *`
 __all__ = [
     # Landing
     "landing_page",
+    "privacy_page",
     # Core
     "index",
     "api_stations",
@@ -80,4 +83,7 @@ __all__ = [
     "api_docs",
     "api_create_key",
     "api_revoke_key",
+    # Push notifications
+    "api_register_device",
+    "api_unregister_device",
 ]

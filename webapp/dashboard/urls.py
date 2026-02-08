@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path("", views.landing_page, name="landing"),
+    path("privacy/", views.privacy_page, name="privacy"),
     path("dashboard/", views.index, name="dashboard"),
     path("health/", views.health_check, name="health"),  # Health check for monitoring
     path("api/stations/", views.api_stations),
@@ -29,4 +30,7 @@ urlpatterns = [
     path("api/v1/cities/", views.api_v1_cities),
     path("api/v1/keys/create/", views.api_create_key),
     path("api/v1/keys/revoke/", views.api_revoke_key),
+    # Push notifications
+    path("api/push/register/", views.api_register_device),
+    path("api/push/unregister/", views.api_unregister_device),
 ]

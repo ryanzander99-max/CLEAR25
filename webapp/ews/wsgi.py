@@ -26,10 +26,11 @@ def _ensure_migrated():
     except Exception:
         needs_migrate = True
     try:
-        from dashboard.models import ReadingSnapshot, CachedResult, Suggestion, APIKey
+        from dashboard.models import ReadingSnapshot, CachedResult, Suggestion, APIKey, DeviceToken
         ReadingSnapshot.objects.count()
         CachedResult.objects.count()
         Suggestion.objects.count()
+        DeviceToken.objects.count()  # Check push notification table
         # Check APIKey exists and has rate limit fields
         ak = APIKey.objects.first()
         if ak:

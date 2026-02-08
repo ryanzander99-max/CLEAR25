@@ -9,6 +9,102 @@ let mapMarkers = [];
 let lastResults = null;
 let lastCityAlerts = null;
 
+// ═══════════════════════════════════════════════════════════════════════════
+// PUSH NOTIFICATIONS (Capacitor)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function initPushNotifications() {
+    // Only run in Capacitor app context
+    if (typeof Capacitor === "undefined" || !Capacitor.isNativePlatform()) {
+        console.log("[Push] Not running in Capacitor, skipping push setup");
+        return;
+    }
+
+    try {
+        const { PushNotifications } = await import("@capacitor/push-notifications");
+
+        // Request permission
+        const permStatus = await PushNotifications.requestPermissions();
+        if (permStatus.receive !== "granted") {
+            console.log("[Push] Permission not granted");
+            return;
+        }
+
+        // Register with APNs
+        await PushNotifications.register();
+
+        // Handle registration success
+        PushNotifications.addListener("registration", async (token) => {
+            console.log("[Push] Registered with token:", token.value.substring(0, 20) + "...");
+
+            // Send token to our backend
+            try {
+                await fetch("/api/push/register/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        token: token.value,
+                        platform: "ios",
+                        cities: [], // Empty = all cities
+                    }),
+                });
+                console.log("[Push] Token registered with server");
+            } catch (e) {
+                console.error("[Push] Failed to register token:", e);
+            }
+        });
+
+        // Handle registration error
+        PushNotifications.addListener("registrationError", (error) => {
+            console.error("[Push] Registration error:", error);
+        });
+
+        // Handle incoming notification while app is open
+        PushNotifications.addListener("pushNotificationReceived", (notification) => {
+            console.log("[Push] Notification received:", notification);
+            // Show in-app toast
+            if (notification.title) {
+                showPushToast(notification.title, notification.body);
+            }
+        });
+
+        // Handle notification tap
+        PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+            console.log("[Push] Notification tapped:", action);
+            // Navigate to dashboard if needed
+            const data = action.notification.data;
+            if (data && data.city) {
+                // Could scroll to city or show details
+            }
+        });
+
+        console.log("[Push] Push notifications initialized");
+    } catch (e) {
+        console.log("[Push] Not available:", e.message);
+    }
+}
+
+function showPushToast(title, body) {
+    const container = document.getElementById("toast-container") || document.body;
+    const toast = document.createElement("div");
+    toast.style.cssText = `
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        background: #1e3a5f; border: 1px solid #3b82f6; color: #fff;
+        padding: 16px 20px; border-radius: 12px; z-index: 10000;
+        max-width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        animation: slideIn 0.3s ease;
+    `;
+    toast.innerHTML = `
+        <div style="font-weight:600;margin-bottom:4px;">${title}</div>
+        <div style="font-size:13px;color:#a1a1aa;">${body || ""}</div>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = "slideOut 0.3s ease";
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
 // DOM refs
 const tableBody = document.getElementById("table-body");
 const statusEl = document.getElementById("status");
@@ -417,6 +513,7 @@ async function init() {
         statusEl.textContent = "No live data yet — run demo or wait for next refresh";
     }
     initFeedbackBoard();
+    initPushNotifications();
 }
 init();
 
