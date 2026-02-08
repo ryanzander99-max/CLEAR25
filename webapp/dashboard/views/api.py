@@ -169,10 +169,16 @@ def billing_page(request):
     if not request.user.is_authenticated:
         from django.shortcuts import redirect
         return redirect("/accounts/google/login/")
-    profile = request.user.profile
+    try:
+        profile = request.user.profile
+        current_plan = profile.active_plan
+        plan_expires = profile.plan_expires
+    except Exception:
+        current_plan = "free"
+        plan_expires = None
     return render(request, "dashboard/billing.html", {
-        "current_plan": profile.active_plan,
-        "plan_expires": profile.plan_expires,
+        "current_plan": current_plan,
+        "plan_expires": plan_expires,
     })
 
 
