@@ -43,6 +43,7 @@ class APIKey(models.Model):
     # Rate limiting (per key)
     requests_this_hour = models.IntegerField(default=0)
     hour_started = models.DateTimeField(null=True, blank=True)
+    total_requests = models.IntegerField(default=0)
 
     RATE_LIMIT = 100  # requests per hour per key
 
@@ -66,8 +67,9 @@ class APIKey(models.Model):
             return False, 0, reset_seconds
 
         self.requests_this_hour += 1
+        self.total_requests += 1
         self.last_used = now
-        self.save(update_fields=["requests_this_hour", "hour_started", "last_used"])
+        self.save(update_fields=["requests_this_hour", "hour_started", "last_used", "total_requests"])
         return True, remaining - 1, reset_seconds
 
     def __str__(self):

@@ -1009,7 +1009,7 @@ async function loadApiKeys() {
                     <div style="flex:1;min-width:0;">
                         <div style="font-weight:500;color:#fafafa;margin-bottom:4px;">${escapeHtml(k.name || 'Unnamed key')}</div>
                         <code style="font-family:'JetBrains Mono',monospace;font-size:12px;color:${accentColor.border};word-break:break-all;">${k.key.substring(0, 12)}...${k.key.substring(k.key.length - 6)}</code>
-                        <div style="font-size:11px;color:#71717a;margin-top:4px;">Created ${timeAgo(k.created_at)}${k.last_used ? ' · Last used ' + timeAgo(k.last_used) : ''}</div>
+                        <div style="font-size:11px;color:#71717a;margin-top:4px;">Created ${timeAgo(k.created_at)}${k.last_used ? ' · Last used ' + timeAgo(k.last_used) : ''} · ${k.total_requests || 0} total requests</div>
                         <div id="timer-${keyId}" style="font-size:11px;color:${timerColor};margin-top:4px;">${timerText}</div>
                     </div>
                     <div style="display:flex;gap:8px;margin-left:16px;">

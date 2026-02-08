@@ -207,6 +207,7 @@ def api_create_key(request):
                 "requests_remaining": remaining,
                 "reset_seconds": reset_seconds,
                 "has_active_window": has_active_window,
+                "total_requests": ak.total_requests,
             })
         return JsonResponse({"keys": keys})
 
