@@ -9,14 +9,14 @@
     <link rel="icon" type="image/svg+xml" href="{% static 'dashboard/favicon.svg' %}?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #09090b;
-            color: #fafafa;
+            background: #000;
+            color: #fff;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
@@ -28,14 +28,14 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(9, 9, 11, 0.85);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(39, 39, 42, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         .nav-inner {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 0 32px;
             height: 64px;
             display: flex;
             align-items: center;
@@ -44,21 +44,20 @@
         .nav-brand {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             text-decoration: none;
-            color: #fafafa;
+            color: #fff;
         }
         .nav-logo {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 28px;
+            height: 28px;
         }
         .nav-title {
-            font-weight: 800;
+            font-weight: 700;
             font-size: 18px;
             letter-spacing: -0.02em;
         }
-        .nav-links {
+        .nav-center {
             display: flex;
             align-items: center;
             gap: 32px;
@@ -66,144 +65,137 @@
         .nav-link {
             font-size: 14px;
             font-weight: 500;
-            color: #a1a1aa;
+            color: rgba(255,255,255,0.7);
             text-decoration: none;
             transition: color 0.15s;
         }
-        .nav-link:hover { color: #fafafa; }
-        .nav-cta {
-            display: inline-flex;
+        .nav-link:hover { color: #fff; }
+        .nav-right {
+            display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            background: #3b82f6;
-            color: #fff;
+            gap: 12px;
+        }
+        .nav-btn {
+            padding: 8px 16px;
             font-size: 14px;
-            font-weight: 600;
-            border-radius: 10px;
+            font-weight: 500;
+            border-radius: 6px;
             text-decoration: none;
             transition: all 0.15s;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            background: transparent;
         }
-        .nav-cta:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
         }
-        .nav-cta svg {
-            width: 16px;
-            height: 16px;
+        .nav-btn-primary {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+        }
+        .nav-btn-primary:hover {
+            background: rgba(255,255,255,0.9);
         }
 
-        /* Hero */
+        /* Hero Section */
         .hero {
             position: relative;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 120px 24px 80px;
+            padding: 120px 24px 60px;
             overflow: hidden;
         }
 
-        /* Canada Map Background */
-        .hero-map {
+        /* Grid pattern */
+        .grid-pattern {
             position: absolute;
-            inset: 0;
-            opacity: 0.08;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .hero-map svg {
-            width: 140%;
-            max-width: 1800px;
-            height: auto;
-            fill: none;
-            stroke: #3b82f6;
-            stroke-width: 0.5;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 400px;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 80px 80px;
+            mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
         }
 
-        /* Gradient overlay */
-        .hero-gradient {
+        /* Gradient rays */
+        .gradient-rays {
             position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 60% 50% at 50% 20%, rgba(239, 68, 68, 0.12), transparent),
-                radial-gradient(ellipse 50% 40% at 30% 70%, rgba(251, 146, 60, 0.08), transparent),
-                radial-gradient(ellipse 40% 30% at 80% 60%, rgba(59, 130, 246, 0.1), transparent);
-            animation: gradientPulse 12s ease-in-out infinite;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 1200px;
+            height: 400px;
+            overflow: hidden;
         }
-        @keyframes gradientPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        .rays-container {
+            position: absolute;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1000px;
+            height: 500px;
+        }
+        .ray {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            height: 400px;
+            transform-origin: bottom center;
+            opacity: 0.6;
         }
 
-        /* Smoke particles */
-        .smoke-particle {
+        /* Triangle/pyramid */
+        .pyramid {
             position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 80px solid transparent;
+            border-right: 80px solid transparent;
+            border-bottom: 160px solid;
+            border-image: linear-gradient(to top, #fff 0%, rgba(255,255,255,0.3) 100%) 1;
+        }
+        .pyramid-glow {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
             width: 200px;
             height: 200px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(251, 146, 60, 0.15), transparent 70%);
-            filter: blur(40px);
-            animation: smokeFloat 20s ease-in-out infinite;
-        }
-        .smoke-1 { top: 20%; left: 15%; animation-delay: 0s; }
-        .smoke-2 { top: 60%; right: 20%; animation-delay: -7s; width: 150px; height: 150px; }
-        .smoke-3 { bottom: 30%; left: 40%; animation-delay: -14s; width: 180px; height: 180px; }
-        @keyframes smokeFloat {
-            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
-            25% { transform: translate(30px, -20px) scale(1.1); opacity: 0.8; }
-            50% { transform: translate(-20px, 30px) scale(0.9); opacity: 0.5; }
-            75% { transform: translate(20px, 10px) scale(1.05); opacity: 0.7; }
+            background: radial-gradient(ellipse at center bottom, rgba(255,255,255,0.3) 0%, transparent 70%);
         }
 
+        /* Hero content */
         .hero-content {
             position: relative;
             z-index: 10;
-            max-width: 800px;
             text-align: center;
-        }
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 100px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #f87171;
-            margin-bottom: 32px;
-        }
-        .hero-badge-dot {
-            width: 8px;
-            height: 8px;
-            background: #ef4444;
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
+            max-width: 900px;
         }
         .hero-title {
-            font-size: clamp(36px, 6vw, 64px);
-            font-weight: 800;
-            letter-spacing: -0.03em;
+            font-size: clamp(40px, 7vw, 72px);
+            font-weight: 700;
+            letter-spacing: -0.04em;
             line-height: 1.1;
             margin-bottom: 24px;
         }
-        .hero-title-gradient {
-            background: linear-gradient(135deg, #fb923c, #ef4444, #f97316);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
         .hero-subtitle {
-            font-size: 18px;
-            color: #a1a1aa;
-            line-height: 1.7;
+            font-size: clamp(16px, 2vw, 20px);
+            color: rgba(255,255,255,0.6);
+            line-height: 1.6;
             max-width: 600px;
             margin: 0 auto 40px;
         }
@@ -216,105 +208,75 @@
         .btn-primary {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 16px 32px;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            color: #fff;
+            gap: 8px;
+            padding: 14px 28px;
+            background: #fff;
+            color: #000;
             font-size: 15px;
             font-weight: 600;
-            border-radius: 12px;
+            border-radius: 8px;
             text-decoration: none;
-            transition: all 0.2s;
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+            transition: all 0.15s;
+            border: 1px solid #fff;
         }
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+            background: rgba(255,255,255,0.9);
+            transform: translateY(-1px);
+        }
+        .btn-primary svg {
+            width: 16px;
+            height: 16px;
         }
         .btn-secondary {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 16px 32px;
-            background: #18181b;
-            border: 1px solid #3f3f46;
-            color: #fafafa;
+            gap: 8px;
+            padding: 14px 28px;
+            background: #000;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
             font-size: 15px;
             font-weight: 600;
-            border-radius: 12px;
+            border-radius: 8px;
             text-decoration: none;
-            transition: all 0.2s;
+            transition: all 0.15s;
         }
         .btn-secondary:hover {
-            background: #27272a;
-            border-color: #52525b;
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
         }
 
-        /* Cities strip */
-        .cities {
+        /* Stats bar */
+        .stats-bar {
             position: relative;
             z-index: 10;
             margin-top: 80px;
             display: flex;
             justify-content: center;
-            gap: 48px;
+            gap: 60px;
             flex-wrap: wrap;
+            padding: 0 24px;
         }
-        .city-item {
+        .stat-item {
             text-align: center;
-        }
-        .city-name {
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: #71717a;
-            margin-bottom: 4px;
-        }
-        .city-status {
-            font-size: 12px;
-            color: #52525b;
-        }
-
-        /* Stats Section */
-        .stats {
-            padding: 80px 24px;
-            background: #0c0c0e;
-            border-top: 1px solid #1f1f23;
-            border-bottom: 1px solid #1f1f23;
-        }
-        .stats-grid {
-            max-width: 1000px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 24px;
-        }
-        .stat-card {
-            text-align: center;
-            padding: 24px;
-            background: #18181b;
-            border: 1px solid #27272a;
-            border-radius: 16px;
         }
         .stat-value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
-            color: #3b82f6;
-            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
         }
         .stat-label {
             font-size: 13px;
-            font-weight: 600;
-            color: #71717a;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            color: rgba(255,255,255,0.5);
+            font-weight: 500;
         }
 
         /* Features Section */
         .features {
-            padding: 100px 24px;
+            padding: 120px 24px;
+            background: #000;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
         .section-header {
             text-align: center;
@@ -322,18 +284,18 @@
             margin: 0 auto 60px;
         }
         .section-title {
-            font-size: 32px;
-            font-weight: 800;
-            letter-spacing: -0.02em;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
             margin-bottom: 16px;
         }
         .section-subtitle {
             font-size: 16px;
-            color: #a1a1aa;
+            color: rgba(255,255,255,0.6);
             line-height: 1.6;
         }
         .features-grid {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -341,166 +303,110 @@
         }
         .feature-card {
             padding: 32px;
-            background: #18181b;
-            border: 1px solid #27272a;
-            border-radius: 16px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
             transition: all 0.2s;
         }
         .feature-card:hover {
-            border-color: #3f3f46;
-            transform: translateY(-4px);
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.15);
         }
         .feature-icon {
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            border-radius: 12px;
             margin-bottom: 20px;
+            color: #fff;
         }
         .feature-icon svg {
-            width: 24px;
-            height: 24px;
-            stroke: #3b82f6;
+            width: 32px;
+            height: 32px;
+            stroke-width: 1.5;
         }
-        .feature-icon.orange { background: rgba(251, 146, 60, 0.1); border-color: rgba(251, 146, 60, 0.2); }
-        .feature-icon.orange svg { stroke: #fb923c; }
-        .feature-icon.green { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.2); }
-        .feature-icon.green svg { stroke: #22c55e; }
         .feature-title {
             font-size: 18px;
-            font-weight: 700;
+            font-weight: 600;
             margin-bottom: 12px;
+            letter-spacing: -0.01em;
         }
         .feature-desc {
             font-size: 14px;
-            color: #a1a1aa;
+            color: rgba(255,255,255,0.5);
             line-height: 1.7;
         }
 
-        /* How it works */
-        .how-it-works {
+        /* Cities Section */
+        .cities {
             padding: 100px 24px;
-            background: #0c0c0e;
-            border-top: 1px solid #1f1f23;
+            background: #000;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
-        .steps-grid {
-            max-width: 1000px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
-        .step-card {
-            text-align: center;
-            padding: 28px 20px;
-            background: #18181b;
-            border: 1px solid #27272a;
-            border-radius: 16px;
-            position: relative;
-        }
-        .step-num {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border-radius: 50%;
-            font-size: 14px;
-            font-weight: 700;
-            margin: 0 auto 16px;
-        }
-        .step-title {
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        .step-desc {
-            font-size: 13px;
-            color: #71717a;
-            line-height: 1.5;
-        }
-
-        /* Alert levels */
-        .alerts {
-            padding: 100px 24px;
-        }
-        .alerts-grid {
+        .cities-grid {
             max-width: 900px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
         }
-        .alert-card {
+        .city-card {
             text-align: center;
-            padding: 20px 12px;
+            padding: 32px 20px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 12px;
-            border: 1px solid transparent;
         }
-        .alert-low { background: rgba(168, 213, 160, 0.1); border-color: rgba(168, 213, 160, 0.3); }
-        .alert-mod { background: rgba(210, 204, 154, 0.1); border-color: rgba(210, 204, 154, 0.3); }
-        .alert-high { background: rgba(240, 191, 160, 0.1); border-color: rgba(240, 191, 160, 0.3); }
-        .alert-vhigh { background: rgba(232, 152, 138, 0.1); border-color: rgba(232, 152, 138, 0.3); }
-        .alert-extreme { background: rgba(230, 92, 80, 0.1); border-color: rgba(230, 92, 80, 0.3); }
-        .alert-badge {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            margin-bottom: 12px;
-        }
-        .alert-low .alert-badge { background: #A8D5A0; color: #000; }
-        .alert-mod .alert-badge { background: #D2CC9A; color: #000; }
-        .alert-high .alert-badge { background: #F0BFA0; color: #000; }
-        .alert-vhigh .alert-badge { background: #E8988A; color: #fff; }
-        .alert-extreme .alert-badge { background: #E65C50; color: #fff; }
-        .alert-range {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
+        .city-name {
+            font-size: 18px;
             font-weight: 600;
-            color: #d4d4d8;
+            margin-bottom: 8px;
+        }
+        .city-stat {
+            font-size: 32px;
+            font-weight: 700;
+            color: #22c55e;
+            margin-bottom: 4px;
+        }
+        .city-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         /* CTA Section */
         .cta {
-            padding: 100px 24px;
-            background: #0c0c0e;
-            border-top: 1px solid #1f1f23;
+            padding: 120px 24px;
+            background: #000;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
         .cta-box {
-            max-width: 700px;
+            max-width: 600px;
             margin: 0 auto;
             text-align: center;
-            padding: 60px 40px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.02));
-            border: 1px solid rgba(59, 130, 246, 0.15);
-            border-radius: 24px;
         }
         .cta-title {
-            font-size: 28px;
-            font-weight: 800;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
             margin-bottom: 16px;
         }
         .cta-subtitle {
             font-size: 16px;
-            color: #a1a1aa;
+            color: rgba(255,255,255,0.6);
             margin-bottom: 32px;
+            line-height: 1.6;
         }
 
         /* Footer */
         .footer {
-            padding: 40px 24px;
-            border-top: 1px solid #1f1f23;
+            padding: 32px 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
         .footer-inner {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
@@ -511,20 +417,15 @@
         .footer-brand {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
         .footer-logo {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
+            width: 24px;
+            height: 24px;
         }
         .footer-name {
-            font-weight: 700;
-            font-size: 15px;
-        }
-        .footer-tagline {
-            font-size: 12px;
-            color: #52525b;
+            font-weight: 600;
+            font-size: 14px;
         }
         .footer-links {
             display: flex;
@@ -532,32 +433,28 @@
         }
         .footer-link {
             font-size: 13px;
-            color: #71717a;
+            color: rgba(255,255,255,0.5);
             text-decoration: none;
             transition: color 0.15s;
         }
-        .footer-link:hover { color: #fafafa; }
+        .footer-link:hover { color: #fff; }
         .footer-credit {
             font-size: 12px;
-            color: #52525b;
+            color: rgba(255,255,255,0.3);
         }
 
         /* Responsive */
         @media (max-width: 900px) {
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .nav-center { display: none; }
             .features-grid { grid-template-columns: 1fr; }
-            .steps-grid { grid-template-columns: repeat(2, 1fr); }
-            .alerts-grid { grid-template-columns: repeat(3, 1fr); }
-            .nav-links { display: none; }
+            .cities-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-bar { gap: 32px; }
         }
         @media (max-width: 600px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .steps-grid { grid-template-columns: 1fr; }
-            .alerts-grid { grid-template-columns: repeat(2, 1fr); }
-            .cities { gap: 24px; }
+            .cities-grid { grid-template-columns: 1fr; }
             .hero-actions { flex-direction: column; align-items: center; }
             .btn-primary, .btn-secondary { width: 100%; max-width: 280px; justify-content: center; }
-            .cta-box { padding: 40px 24px; }
+            .stats-bar { flex-direction: column; gap: 24px; }
             .footer-inner { flex-direction: column; text-align: center; }
         }
     </style>
@@ -570,112 +467,108 @@
                 <img src="{% static 'dashboard/favicon.svg' %}" alt="" class="nav-logo">
                 <span class="nav-title">CLEAR25</span>
             </a>
-            <div class="nav-links">
+            <div class="nav-center">
                 <a href="#features" class="nav-link">Features</a>
-                <a href="#how-it-works" class="nav-link">How It Works</a>
+                <a href="#cities" class="nav-link">Cities</a>
                 <a href="/dashboard/#tab-research" class="nav-link">Research</a>
             </div>
-            <a href="/dashboard/" class="nav-cta">
-                Open Dashboard
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-            </a>
+            <div class="nav-right">
+                <a href="/dashboard/#tab-feedback" class="nav-btn">Feedback</a>
+                <a href="/dashboard/" class="nav-btn nav-btn-primary">Dashboard</a>
+            </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
     <section class="hero">
-        <!-- Canada map background -->
-        <div class="hero-map">
-            <svg viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet">
-                <!-- Simplified Canada outline -->
-                <path d="M180,340 L200,320 L220,300 L250,290 L280,285 L310,280 L340,275 L370,280 L400,290 L420,300 L440,290 L460,280 L490,275 L520,280 L550,290 L580,300 L610,290 L640,280 L670,285 L700,295 L730,300 L760,290 L790,280 L820,285 L850,300 L870,320 L880,340 L885,360 L880,380 L870,400 L850,420 L820,430 L790,435 L760,430 L730,420 L700,425 L670,435 L640,440 L610,435 L580,425 L550,420 L520,425 L490,430 L460,425 L430,415 L400,410 L370,415 L340,420 L310,425 L280,420 L250,410 L220,400 L200,380 L185,360 L180,340"/>
-                <!-- Vancouver -->
-                <circle cx="200" cy="360" r="8" fill="#3b82f6" opacity="0.8"/>
-                <!-- Edmonton -->
-                <circle cx="320" cy="320" r="8" fill="#3b82f6" opacity="0.8"/>
-                <!-- Toronto -->
-                <circle cx="620" cy="400" r="8" fill="#3b82f6" opacity="0.8"/>
-                <!-- Montreal -->
-                <circle cx="720" cy="380" r="8" fill="#3b82f6" opacity="0.8"/>
-                <!-- Connection lines -->
-                <path d="M200,360 Q400,200 620,400" stroke="#3b82f6" stroke-width="1" fill="none" opacity="0.3" stroke-dasharray="8,8"/>
-                <path d="M320,320 Q500,250 620,400" stroke="#3b82f6" stroke-width="1" fill="none" opacity="0.3" stroke-dasharray="8,8"/>
-                <path d="M620,400 L720,380" stroke="#3b82f6" stroke-width="1" fill="none" opacity="0.3" stroke-dasharray="8,8"/>
+        <!-- Grid pattern background -->
+        <div class="grid-pattern"></div>
+
+        <!-- Gradient rays at bottom -->
+        <div class="gradient-rays">
+            <svg width="100%" height="100%" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice">
+                <defs>
+                    <linearGradient id="ray-green" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stop-color="#22c55e" stop-opacity="0.8"/>
+                        <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+                    </linearGradient>
+                    <linearGradient id="ray-yellow" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stop-color="#eab308" stop-opacity="0.7"/>
+                        <stop offset="100%" stop-color="#eab308" stop-opacity="0"/>
+                    </linearGradient>
+                    <linearGradient id="ray-orange" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stop-color="#f97316" stop-opacity="0.8"/>
+                        <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+                    </linearGradient>
+                    <linearGradient id="ray-red" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stop-color="#ef4444" stop-opacity="0.8"/>
+                        <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+                    </linearGradient>
+                </defs>
+                <!-- Left side rays (green/yellow) -->
+                <line x1="600" y1="400" x2="100" y2="50" stroke="url(#ray-green)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="150" y2="30" stroke="url(#ray-green)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="200" y2="20" stroke="url(#ray-green)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="250" y2="15" stroke="url(#ray-green)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="300" y2="10" stroke="url(#ray-yellow)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="350" y2="8" stroke="url(#ray-yellow)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="400" y2="5" stroke="url(#ray-yellow)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="450" y2="3" stroke="url(#ray-yellow)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="500" y2="2" stroke="url(#ray-orange)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="550" y2="1" stroke="url(#ray-orange)" stroke-width="1.5"/>
+                <!-- Center -->
+                <line x1="600" y1="400" x2="600" y2="0" stroke="url(#ray-orange)" stroke-width="2"/>
+                <!-- Right side rays (orange/red) -->
+                <line x1="600" y1="400" x2="650" y2="1" stroke="url(#ray-orange)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="700" y2="2" stroke="url(#ray-orange)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="750" y2="3" stroke="url(#ray-red)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="800" y2="5" stroke="url(#ray-red)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="850" y2="8" stroke="url(#ray-red)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="900" y2="10" stroke="url(#ray-red)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="950" y2="15" stroke="url(#ray-red)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="1000" y2="20" stroke="url(#ray-red)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="1050" y2="30" stroke="url(#ray-red)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="1100" y2="50" stroke="url(#ray-red)" stroke-width="1.5"/>
             </svg>
         </div>
 
-        <div class="hero-gradient"></div>
-        <div class="smoke-particle smoke-1"></div>
-        <div class="smoke-particle smoke-2"></div>
-        <div class="smoke-particle smoke-3"></div>
-
         <div class="hero-content">
-            <div class="hero-badge">
-                <span class="hero-badge-dot"></span>
-                Wildfire Smoke Early Warning System
-            </div>
-            <h1 class="hero-title">
-                Before the Sky<br>
-                <span class="hero-title-gradient">Turns Orange</span>
-            </h1>
+            <h1 class="hero-title">Before the sky turns orange.</h1>
             <p class="hero-subtitle">
-                Get 6-48 hours of advance warning before dangerous wildfire smoke arrives.
-                Powered by 218 monitoring stations and 20 years of air quality data.
+                CLEAR25 provides 6-48 hours of advance warning before dangerous wildfire smoke arrives in your city. Powered by 218 monitoring stations.
             </p>
             <div class="hero-actions">
                 <a href="/dashboard/" class="btn-primary">
-                    Open Dashboard
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                        <polyline points="2 17 12 22 22 17"/>
+                        <polyline points="2 12 12 17 22 12"/>
                     </svg>
+                    Open Dashboard
                 </a>
                 <a href="/dashboard/#tab-research" class="btn-secondary">
                     View Research
                 </a>
             </div>
-
-            <!-- Cities -->
-            <div class="cities">
-                <div class="city-item">
-                    <div class="city-name">Toronto</div>
-                    <div class="city-status">100% Detection</div>
-                </div>
-                <div class="city-item">
-                    <div class="city-name">Edmonton</div>
-                    <div class="city-status">90% Detection</div>
-                </div>
-                <div class="city-item">
-                    <div class="city-name">Montreal</div>
-                    <div class="city-status">100% Detection</div>
-                </div>
-                <div class="city-item">
-                    <div class="city-name">Vancouver</div>
-                    <div class="city-status">100% Detection</div>
-                </div>
-            </div>
         </div>
-    </section>
 
-    <!-- Stats Section -->
-    <section class="stats">
-        <div class="stats-grid">
-            <div class="stat-card">
+        <!-- Stats bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
                 <div class="stat-value">97.9%</div>
                 <div class="stat-label">Detection Rate</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-item">
                 <div class="stat-value">0%</div>
                 <div class="stat-label">False Alarms</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-item">
                 <div class="stat-value">6-48hr</div>
                 <div class="stat-label">Lead Time</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value">218</div>
-                <div class="stat-label">Stations</div>
+            <div class="stat-item">
+                <div class="stat-value">20 years</div>
+                <div class="stat-label">Data Analysis</div>
             </div>
         </div>
     </section>
@@ -683,15 +576,15 @@
     <!-- Features Section -->
     <section id="features" class="features">
         <div class="section-header">
-            <h2 class="section-title">How C.L.E.A.R. Works</h2>
+            <h2 class="section-title">How it works</h2>
             <p class="section-subtitle">
-                Repurposing existing NAPS monitoring stations to detect approaching wildfire smoke before it arrives.
+                Repurposing existing NAPS monitoring stations to detect approaching wildfire smoke before it reaches major cities.
             </p>
         </div>
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
                         <circle cx="12" cy="10" r="3"/>
                     </svg>
@@ -702,9 +595,9 @@
                 </p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon orange">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                     </svg>
                 </div>
                 <h3 class="feature-title">Regression Analysis</h3>
@@ -713,95 +606,66 @@
                 </p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon green">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                     </svg>
                 </div>
                 <h3 class="feature-title">Real-time Alerts</h3>
                 <p class="feature-desc">
-                    Color-coded health warnings triggered automatically when smoke is detected approaching.
+                    Color-coded health warnings triggered automatically when smoke is detected approaching your city.
                 </p>
             </div>
         </div>
     </section>
 
-    <!-- How It Works -->
-    <section id="how-it-works" class="how-it-works">
+    <!-- Cities Section -->
+    <section id="cities" class="cities">
         <div class="section-header">
-            <h2 class="section-title">From Data to Warning</h2>
+            <h2 class="section-title">Protected cities</h2>
             <p class="section-subtitle">
-                A four-step process that gives you time to prepare.
+                Historical validation across 83 smoke events from 2003-2023.
             </p>
         </div>
-        <div class="steps-grid">
-            <div class="step-card">
-                <div class="step-num">1</div>
-                <h3 class="step-title">Data Collection</h3>
-                <p class="step-desc">PM2.5 readings from NAPS and U.S. EPA stations across North America</p>
+        <div class="cities-grid">
+            <div class="city-card">
+                <div class="city-name">Toronto</div>
+                <div class="city-stat">100%</div>
+                <div class="city-label">Detection</div>
             </div>
-            <div class="step-card">
-                <div class="step-num">2</div>
-                <h3 class="step-title">Pattern Analysis</h3>
-                <p class="step-desc">Correlation analysis identifies stations that predict city PM2.5 levels</p>
+            <div class="city-card">
+                <div class="city-name">Vancouver</div>
+                <div class="city-stat">100%</div>
+                <div class="city-label">Detection</div>
             </div>
-            <div class="step-card">
-                <div class="step-num">3</div>
-                <h3 class="step-title">Threshold Check</h3>
-                <p class="step-desc">When upstream stations exceed thresholds, alerts are triggered</p>
+            <div class="city-card">
+                <div class="city-name">Montréal</div>
+                <div class="city-stat">100%</div>
+                <div class="city-label">Detection</div>
             </div>
-            <div class="step-card">
-                <div class="step-num">4</div>
-                <h3 class="step-title">Early Warning</h3>
-                <p class="step-desc">6-48 hours of lead time based on station distance and tier</p>
+            <div class="city-card">
+                <div class="city-name">Edmonton</div>
+                <div class="city-stat">90%</div>
+                <div class="city-label">Detection</div>
             </div>
         </div>
     </section>
 
-    <!-- Alert Levels -->
-    <section class="alerts">
-        <div class="section-header">
-            <h2 class="section-title">Alert Levels</h2>
-            <p class="section-subtitle">
-                Color-coded warnings based on predicted PM2.5 concentrations.
-            </p>
-        </div>
-        <div class="alerts-grid">
-            <div class="alert-card alert-low">
-                <span class="alert-badge">LOW</span>
-                <div class="alert-range">&lt; 20 µg/m³</div>
-            </div>
-            <div class="alert-card alert-mod">
-                <span class="alert-badge">MODERATE</span>
-                <div class="alert-range">21-60 µg/m³</div>
-            </div>
-            <div class="alert-card alert-high">
-                <span class="alert-badge">HIGH</span>
-                <div class="alert-range">61-80 µg/m³</div>
-            </div>
-            <div class="alert-card alert-vhigh">
-                <span class="alert-badge">VERY HIGH</span>
-                <div class="alert-range">81-120 µg/m³</div>
-            </div>
-            <div class="alert-card alert-extreme">
-                <span class="alert-badge">EXTREME</span>
-                <div class="alert-range">&gt; 120 µg/m³</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA -->
+    <!-- CTA Section -->
     <section class="cta">
         <div class="cta-box">
-            <h2 class="cta-title">Get Early Smoke Warnings</h2>
+            <h2 class="cta-title">Get early smoke warnings</h2>
             <p class="cta-subtitle">
-                Access real-time predictions for Toronto, Edmonton, Montréal, and Vancouver.
+                Access real-time predictions for Toronto, Edmonton, Montréal, and Vancouver. Free and open source.
             </p>
             <a href="/dashboard/" class="btn-primary">
-                Open Dashboard
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                    <polyline points="2 17 12 22 22 17"/>
+                    <polyline points="2 12 12 17 22 12"/>
                 </svg>
+                Open Dashboard
             </a>
         </div>
     </section>
@@ -811,10 +675,7 @@
         <div class="footer-inner">
             <div class="footer-brand">
                 <img src="{% static 'dashboard/favicon.svg' %}" alt="" class="footer-logo">
-                <div>
-                    <div class="footer-name">CLEAR25</div>
-                    <div class="footer-tagline">Canadian Lead-time Early Air Response</div>
-                </div>
+                <span class="footer-name">CLEAR25</span>
             </div>
             <div class="footer-links">
                 <a href="/dashboard/" class="footer-link">Dashboard</a>
