@@ -243,5 +243,17 @@ AUTH_PASSWORD_VALIDATORS = [
 # NOWPAYMENTS (Crypto Billing)
 # =============================================================================
 
-NOWPAYMENTS_API_KEY = os.environ.get("NOWPAYMENTS_API_KEY", "")
-NOWPAYMENTS_IPN_SECRET = os.environ.get("NOWPAYMENTS_IPN_SECRET", "")
+NOWPAYMENTS_SANDBOX = os.environ.get("NOWPAYMENTS_SANDBOX", "false").lower() == "true"
+
+# Store both sets of keys — flip NOWPAYMENTS_SANDBOX to switch
+_NP_LIVE_KEY = os.environ.get("NOWPAYMENTS_API_KEY", "")
+_NP_LIVE_IPN = os.environ.get("NOWPAYMENTS_IPN_SECRET", "")
+_NP_SANDBOX_KEY = os.environ.get("NOWPAYMENTS_SANDBOX_API_KEY", "")
+_NP_SANDBOX_IPN = os.environ.get("NOWPAYMENTS_SANDBOX_IPN_SECRET", "")
+
+NOWPAYMENTS_API_KEY = _NP_SANDBOX_KEY if NOWPAYMENTS_SANDBOX else _NP_LIVE_KEY
+NOWPAYMENTS_IPN_SECRET = _NP_SANDBOX_IPN if NOWPAYMENTS_SANDBOX else _NP_LIVE_IPN
+NOWPAYMENTS_API_URL = (
+    "https://api-sandbox.nowpayments.io" if NOWPAYMENTS_SANDBOX
+    else "https://api.nowpayments.io"
+)

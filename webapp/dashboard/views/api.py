@@ -383,8 +383,9 @@ def api_create_payment(request):
             return JsonResponse({"error": "Payment system not configured"}, status=503)
 
         import requests as http_requests
+        base_url = getattr(settings, "NOWPAYMENTS_API_URL", "https://api.nowpayments.io")
         resp = http_requests.post(
-            "https://api.nowpayments.io/v1/invoice",
+            f"{base_url}/v1/invoice",
             headers={
                 "x-api-key": api_key,
                 "Content-Type": "application/json",
