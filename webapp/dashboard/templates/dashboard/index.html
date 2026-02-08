@@ -659,17 +659,10 @@
                                     Loading...
                                 </div>
                             </div>
-                            <div style="display:flex;gap:8px;margin-top:16px;align-items:center;">
-                                <button class="action-btn action-primary" id="btn-create-api-key">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                                    Create API Key
-                                </button>
-                                <button class="action-btn action-secondary" id="btn-refresh-api-keys" onclick="refreshApiKeysWithSpin()">
-                                    <svg id="refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.3s;"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                                    Refresh
-                                </button>
-                                <span id="api-keys-updated" style="font-size:11px;color:#71717a;margin-left:8px;"></span>
-                            </div>
+                            <button class="action-btn action-primary" id="btn-create-api-key" style="margin-top:16px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                                Create API Key
+                            </button>
                         {% else %}
                             <div style="text-align:center;padding:24px;">
                                 <p style="color:#71717a;margin-bottom:16px;">Sign in to create and manage your API keys.</p>
@@ -861,7 +854,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{% static 'dashboard/app.js' %}?v=24"></script>
+    <script src="{% static 'dashboard/app.js' %}?v=25"></script>
     <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
