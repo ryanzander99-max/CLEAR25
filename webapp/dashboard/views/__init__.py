@@ -38,6 +38,16 @@ from .account import (
 # Health check
 from .health import health_check
 
+# Public API v1
+from .api import (
+    api_v1_live,
+    api_v1_stations,
+    api_v1_cities,
+    api_docs,
+    api_create_key,
+    api_revoke_key,
+)
+
 # Export all for `from dashboard.views import *`
 __all__ = [
     # Landing
@@ -63,4 +73,11 @@ __all__ = [
     "api_delete_account",
     # Health
     "health_check",
+    # Public API v1
+    "api_v1_live",
+    "api_v1_stations",
+    "api_v1_cities",
+    "api_docs",
+    "api_create_key",
+    "api_revoke_key",
 ]

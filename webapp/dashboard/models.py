@@ -1,4 +1,5 @@
 import datetime
+import secrets
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
@@ -29,6 +30,24 @@ class UserProfile(models.Model):
         elapsed = timezone.now() - self.last_fetch_time
         remaining = datetime.timedelta(minutes=30) - elapsed
         return max(0, int(remaining.total_seconds()))
+
+
+class APIKey(models.Model):
+    """API key for public API access."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="api_keys")
+    key = models.CharField(max_length=64, unique=True, db_index=True)
+    name = models.CharField(max_length=100, blank=True)  # Optional label
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = secrets.token_hex(32)  # 64-char hex string
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.name or 'API Key'} ({self.key[:8]}...)"
 
 
 class ReadingSnapshot(models.Model):

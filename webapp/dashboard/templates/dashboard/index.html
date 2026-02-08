@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}?v=29">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}?v=31">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -55,6 +55,10 @@
                     <button class="sidebar-tab" data-tab="feedback">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         <span>Feedback</span>
+                    </button>
+                    <button class="sidebar-tab" data-tab="api">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg>
+                        <span>API</span>
                     </button>
                 </div>
             </div>
@@ -621,11 +625,173 @@
             </div>
         </div>
 
+            <!-- ============================================================ -->
+            <!-- TAB: API                                                      -->
+            <!-- ============================================================ -->
+            <div id="tab-api" class="tab-content">
+                <div class="api-docs">
+                    <div class="research-badge">Developer API</div>
+                    <h1 class="research-h1">CLEAR25 API</h1>
+                    <p class="research-intro" style="margin-bottom:32px;">
+                        Access real-time PM2.5 readings and predictions programmatically. Build integrations, dashboards, or custom alerts.
+                    </p>
+
+                    <!-- API Keys Section -->
+                    <div class="research-card" style="margin-bottom:24px;">
+                        <h2 class="research-subtitle" style="margin-bottom:16px;">Your API Keys</h2>
+                        {% if user.is_authenticated %}
+                            <div id="api-keys-list">
+                                <div class="api-keys-empty" id="api-keys-empty" style="text-align:center;padding:24px;color:#71717a;">
+                                    Loading...
+                                </div>
+                            </div>
+                            <button class="action-btn action-primary" onclick="createApiKey()" style="margin-top:16px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                                Create API Key
+                            </button>
+                        {% else %}
+                            <div style="text-align:center;padding:24px;">
+                                <p style="color:#71717a;margin-bottom:16px;">Sign in to create and manage your API keys.</p>
+                                <a href="/accounts/google/login/" class="action-btn action-primary" style="text-decoration:none;display:inline-flex;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                                    Sign in with Google
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Quick Start -->
+                    <div class="research-card" style="margin-bottom:24px;">
+                        <h2 class="research-subtitle">Quick Start</h2>
+                        <p>Base URL: <code>https://clear25.xyz/api/v1/</code></p>
+                        <p style="margin-top:12px;">All requests require an API key in the Authorization header:</p>
+                        <pre>Authorization: Bearer YOUR_API_KEY</pre>
+                    </div>
+
+                    <!-- Level Reference -->
+                    <div class="research-card" style="margin-bottom:24px;">
+                        <h2 class="research-subtitle">Air Quality Levels</h2>
+                        <p style="margin-bottom:16px;">The API returns air quality as an integer <code>level</code> (1-5):</p>
+                        <table class="research-table" style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th style="width:60px;">Level</th>
+                                    <th style="width:100px;">Name</th>
+                                    <th style="width:120px;">PM2.5 Range</th>
+                                    <th>Health Advisory</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#A8D5A0;color:#000;font-weight:600;font-size:12px;">1</span></td>
+                                    <td>NONE</td>
+                                    <td>0 - 31 µg/m³</td>
+                                    <td style="color:#71717a;">No precautions needed.</td>
+                                </tr>
+                                <tr>
+                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#D2CC9A;color:#000;font-weight:600;font-size:12px;">2</span></td>
+                                    <td>MODERATE</td>
+                                    <td>31 - 60 µg/m³</td>
+                                    <td style="color:#71717a;">Sensitive groups avoid strenuous activities.</td>
+                                </tr>
+                                <tr>
+                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#F0BFA0;color:#000;font-weight:600;font-size:12px;">3</span></td>
+                                    <td>HIGH</td>
+                                    <td>60 - 80 µg/m³</td>
+                                    <td style="color:#71717a;">Everyone reduce physical exertion. Use N95 mask.</td>
+                                </tr>
+                                <tr>
+                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#E8988A;color:#fff;font-weight:600;font-size:12px;">4</span></td>
+                                    <td>VERY HIGH</td>
+                                    <td>80 - 120 µg/m³</td>
+                                    <td style="color:#71717a;">Avoid all outdoor activity. Keep hydrated.</td>
+                                </tr>
+                                <tr>
+                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#E65C50;color:#fff;font-weight:600;font-size:12px;">5</span></td>
+                                    <td>EXTREME</td>
+                                    <td>&gt;120 µg/m³</td>
+                                    <td style="color:#71717a;">Halt all indoor pollution sources.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Endpoints -->
+                    <div class="research-card" style="margin-bottom:24px;">
+                        <h2 class="research-subtitle">Endpoints</h2>
+
+                        <!-- GET /api/v1/live -->
+                        <div class="endpoint-card">
+                            <div class="endpoint-header">
+                                <span class="endpoint-method">GET</span>
+                                <code class="endpoint-path">/api/v1/live/</code>
+                            </div>
+                            <div class="endpoint-body">
+                                <p style="color:#a1a1aa;margin-bottom:12px;">Get current PM2.5 readings and 1-hour predictions for all stations.</p>
+                                <div class="response-label">Response</div>
+                                <pre>{
+  "stations": [
+    {
+      "id": "60106",
+      "name": "Station Name",
+      "city": "Toronto",
+      "lat": 43.6591,
+      "lon": -79.3802,
+      "pm25": 45.2,
+      "predicted": 52.1,
+      "level": 2,
+      "level_name": "MODERATE",
+      "health_advisory": "..."
+    }
+  ],
+  "count": 50,
+  "timestamp": "2025-02-07T10:30:00Z",
+  "age_seconds": 120
+}</pre>
+                            </div>
+                        </div>
+
+                        <!-- GET /api/v1/stations -->
+                        <div class="endpoint-card">
+                            <div class="endpoint-header">
+                                <span class="endpoint-method">GET</span>
+                                <code class="endpoint-path">/api/v1/stations/</code>
+                            </div>
+                            <div class="endpoint-body">
+                                <p style="color:#a1a1aa;">Get list of all monitoring stations. Optional <code>?city=Toronto</code> filter.</p>
+                            </div>
+                        </div>
+
+                        <!-- GET /api/v1/cities -->
+                        <div class="endpoint-card" style="margin-bottom:0;">
+                            <div class="endpoint-header">
+                                <span class="endpoint-method">GET</span>
+                                <code class="endpoint-path">/api/v1/cities/</code>
+                            </div>
+                            <div class="endpoint-body">
+                                <p style="color:#a1a1aa;">Get list of supported cities with coordinates.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rate Limits -->
+                    <div class="research-card">
+                        <h2 class="research-subtitle">Rate Limits & Errors</h2>
+                        <ul class="method-list">
+                            <li>100 requests per hour per API key</li>
+                            <li>Data refreshes every 30 minutes</li>
+                            <li><code>401</code> — Missing or invalid API key</li>
+                            <li><code>429</code> — Rate limit exceeded</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{% static 'dashboard/app.js' %}?v=18"></script>
+    <script src="{% static 'dashboard/app.js' %}?v=20"></script>
     <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>

@@ -1401,6 +1401,97 @@ body {
 }
 
 /* ============================================================
+   API DOCS
+   ============================================================ */
+
+.api-docs code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.api-docs pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: #000;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0 0 0;
+    overflow-x: auto;
+    line-height: 1.5;
+}
+
+.api-docs .endpoint-card {
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.api-docs .endpoint-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #27272a;
+}
+
+.api-docs .endpoint-method {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: #22c55e;
+    color: #000;
+}
+
+.api-docs .endpoint-path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: transparent;
+    padding: 0;
+}
+
+.api-docs .endpoint-body {
+    padding: 16px;
+}
+
+.api-docs .response-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #71717a;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+/* API docs table overrides */
+.api-docs .research-table {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.api-docs .research-table td {
+    font-weight: 500;
+}
+
+.api-docs .research-table td:nth-child(2) {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+}
+
+.api-docs .research-table td:nth-child(3) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+}
+
+/* ============================================================
    FEEDBACK BOARD
    ============================================================ */
 

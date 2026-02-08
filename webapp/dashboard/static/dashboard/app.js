@@ -812,3 +812,146 @@ function timeAgo(isoString) {
     if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
     return date.toLocaleDateString();
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API KEY MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+let apiKeysLoaded = false;
+
+async function loadApiKeys() {
+    const listEl = document.getElementById("api-keys-list");
+    const emptyEl = document.getElementById("api-keys-empty");
+    if (!listEl) return;
+
+    try {
+        const resp = await fetch("/api/auth-status/");
+        const auth = await resp.json();
+
+        if (!auth.authenticated) {
+            if (emptyEl) emptyEl.textContent = "Sign in to manage API keys";
+            return;
+        }
+
+        // Fetch user's API keys
+        const keysResp = await fetch("/api/v1/keys/create/", { method: "GET" });
+        if (!keysResp.ok) {
+            if (emptyEl) emptyEl.textContent = "Failed to load API keys";
+            return;
+        }
+
+        const data = await keysResp.json();
+        const keys = data.keys || [];
+
+        if (keys.length === 0) {
+            if (emptyEl) emptyEl.textContent = "No API keys yet. Create one to get started.";
+            return;
+        }
+
+        listEl.innerHTML = keys.map(k => `
+            <div class="api-key-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#18181b;border:1px solid #27272a;border-radius:8px;margin-bottom:8px;">
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:500;color:#fafafa;margin-bottom:4px;">${escapeHtml(k.name || 'Unnamed key')}</div>
+                    <code style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#71717a;word-break:break-all;">${k.key.substring(0, 16)}...${k.key.substring(k.key.length - 8)}</code>
+                    <div style="font-size:11px;color:#52525b;margin-top:4px;">Created ${timeAgo(k.created_at)}${k.last_used ? ' · Last used ' + timeAgo(k.last_used) : ''}</div>
+                </div>
+                <div style="display:flex;gap:8px;margin-left:16px;">
+                    <button onclick="copyApiKey('${k.key}')" class="action-btn action-secondary" style="padding:6px 12px;font-size:12px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                    <button onclick="revokeApiKey('${k.key}')" class="action-btn" style="padding:6px 12px;font-size:12px;background:#7f1d1d;border-color:#991b1b;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        Revoke
+                    </button>
+                </div>
+            </div>
+        `).join("");
+    } catch (e) {
+        console.error("Failed to load API keys:", e);
+        if (emptyEl) emptyEl.textContent = "Failed to load API keys";
+    }
+}
+
+async function createApiKey() {
+    const name = prompt("Enter a name for this API key (optional):", "");
+    if (name === null) return; // User cancelled
+
+    try {
+        const resp = await fetch("/api/v1/keys/create/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name || "" }),
+        });
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            alert(data.error || "Failed to create API key");
+            return;
+        }
+
+        // Show the new key (only shown once!)
+        const key = data.key;
+        const copyPrompt = `Your new API key:\n\n${key}\n\nCopy this key now — you won't be able to see it again!`;
+
+        if (navigator.clipboard) {
+            await navigator.clipboard.writeText(key);
+            alert(copyPrompt + "\n\n✓ Key copied to clipboard!");
+        } else {
+            alert(copyPrompt);
+        }
+
+        loadApiKeys(); // Refresh list
+    } catch (e) {
+        console.error("Failed to create API key:", e);
+        alert("Failed to create API key");
+    }
+}
+
+async function copyApiKey(key) {
+    try {
+        await navigator.clipboard.writeText(key);
+        // Brief visual feedback
+        const btn = event.target.closest("button");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+        setTimeout(() => { btn.innerHTML = originalText; }, 1500);
+    } catch (e) {
+        alert("Failed to copy to clipboard");
+    }
+}
+
+async function revokeApiKey(key) {
+    if (!confirm("Are you sure you want to revoke this API key? This cannot be undone.")) {
+        return;
+    }
+
+    try {
+        const resp = await fetch("/api/v1/keys/revoke/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key }),
+        });
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            alert(data.error || "Failed to revoke API key");
+            return;
+        }
+
+        loadApiKeys(); // Refresh list
+    } catch (e) {
+        console.error("Failed to revoke API key:", e);
+        alert("Failed to revoke API key");
+    }
+}
+
+// Load API keys when switching to API tab
+document.querySelectorAll(".sidebar-tab").forEach(t => {
+    t.addEventListener("click", () => {
+        if (t.dataset.tab === "api" && !apiKeysLoaded) {
+            apiKeysLoaded = true;
+            loadApiKeys();
+        }
+    });
+});

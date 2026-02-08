@@ -26,10 +26,11 @@ def _ensure_migrated():
     except Exception:
         needs_migrate = True
     try:
-        from dashboard.models import ReadingSnapshot, CachedResult, Suggestion
+        from dashboard.models import ReadingSnapshot, CachedResult, Suggestion, APIKey
         ReadingSnapshot.objects.count()
         CachedResult.objects.count()
         Suggestion.objects.count()
+        APIKey.objects.count()
     except Exception:
         needs_migrate = True
     if needs_migrate:

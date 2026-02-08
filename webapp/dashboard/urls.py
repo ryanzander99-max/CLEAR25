@@ -22,4 +22,11 @@ urlpatterns = [
     path("settings/", views.settings_page, name="settings"),
     path("api/settings/profile/", views.api_update_profile),
     path("api/settings/delete-account/", views.api_delete_account),
+    # Public API v1
+    path("developers/", views.api_docs, name="api_docs"),
+    path("api/v1/live/", views.api_v1_live),
+    path("api/v1/stations/", views.api_v1_stations),
+    path("api/v1/cities/", views.api_v1_cities),
+    path("api/v1/keys/create/", views.api_create_key),
+    path("api/v1/keys/revoke/", views.api_revoke_key),
 ]
