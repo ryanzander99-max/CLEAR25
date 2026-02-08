@@ -19,7 +19,18 @@ def settings_page(request):
     """Render the settings page. Requires authentication."""
     if not request.user.is_authenticated:
         return redirect("/accounts/google/login/")
-    return render(request, "dashboard/settings.html")
+    current_plan = "free"
+    plan_expires = None
+    try:
+        profile = request.user.profile
+        current_plan = profile.active_plan
+        plan_expires = profile.plan_expires
+    except Exception:
+        pass
+    return render(request, "dashboard/settings.html", {
+        "current_plan": current_plan,
+        "plan_expires": plan_expires,
+    })
 
 
 @csrf_exempt
@@ -61,6 +72,24 @@ def api_update_profile(request):
         "last_name": request.user.last_name,
         "full_name": request.user.get_full_name(),
     })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_downgrade_plan(request):
+    """Downgrade user plan back to free."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Login required"}, status=401)
+
+    profile = request.user.profile
+    if profile.active_plan == "free":
+        return JsonResponse({"error": "Already on the free plan"}, status=400)
+
+    profile.plan = "free"
+    profile.plan_expires = None
+    profile.save(update_fields=["plan", "plan_expires"])
+
+    return JsonResponse({"ok": True, "plan": "free"})
 
 
 @csrf_exempt

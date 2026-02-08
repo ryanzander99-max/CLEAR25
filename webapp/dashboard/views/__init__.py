@@ -32,6 +32,7 @@ from .feedback import (
 from .account import (
     settings_page,
     api_update_profile,
+    api_downgrade_plan,
     api_delete_account,
 )
 
@@ -78,6 +79,7 @@ __all__ = [
     # Account
     "settings_page",
     "api_update_profile",
+    "api_downgrade_plan",
     "api_delete_account",
     # Health
     "health_check",

@@ -320,6 +320,29 @@
                 </form>
             </div>
 
+            <!-- Subscription -->
+            {% if current_plan != "free" %}
+            <div class="settings-card">
+                <h2>Subscription</h2>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                    <span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;{% if current_plan == 'business' %}background:rgba(168,85,247,0.15);color:#a855f7{% else %}background:rgba(59,130,246,0.15);color:#60a5fa{% endif %};">{{ current_plan|upper }}</span>
+                    <span style="font-size:14px;color:#a1a1aa;">
+                        {% if plan_expires %}Expires {{ plan_expires|date:"M j, Y" }}{% endif %}
+                    </span>
+                </div>
+                <p>Downgrading will immediately switch you to the Free plan (100 req/hr, 1 API key). If you have more than 1 API key, extra keys will stop working.</p>
+                <div id="downgrade-success" class="success-msg">Plan downgraded to Free.</div>
+                <div id="downgrade-error" class="error-msg"></div>
+                <button class="btn btn-danger" id="downgrade-btn" style="margin-top:4px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="7 13 12 18 17 13"/>
+                        <line x1="12" y1="6" x2="12" y2="18"/>
+                    </svg>
+                    Downgrade to Free
+                </button>
+            </div>
+            {% endif %}
+
             <!-- Danger Zone -->
             <div class="settings-card danger-zone">
                 <h2>Danger Zone</h2>
@@ -437,6 +460,44 @@
                 btn.textContent = "Yes, delete my account";
             }
         });
+
+        // Downgrade plan
+        const downgradeBtn = document.getElementById("downgrade-btn");
+        if (downgradeBtn) {
+            downgradeBtn.addEventListener("click", async () => {
+                if (!confirm("Are you sure you want to downgrade to the Free plan? This takes effect immediately.")) return;
+
+                const successEl = document.getElementById("downgrade-success");
+                const errorEl = document.getElementById("downgrade-error");
+                successEl.style.display = "none";
+                errorEl.style.display = "none";
+                downgradeBtn.disabled = true;
+                downgradeBtn.textContent = "Downgrading...";
+
+                try {
+                    const resp = await fetch("/api/settings/downgrade/", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                    });
+                    const data = await resp.json();
+
+                    if (resp.ok) {
+                        successEl.style.display = "block";
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        errorEl.textContent = data.error || "Failed to downgrade";
+                        errorEl.style.display = "block";
+                        downgradeBtn.disabled = false;
+                        downgradeBtn.textContent = "Downgrade to Free";
+                    }
+                } catch (err) {
+                    errorEl.textContent = "Network error";
+                    errorEl.style.display = "block";
+                    downgradeBtn.disabled = false;
+                    downgradeBtn.textContent = "Downgrade to Free";
+                }
+            });
+        }
     </script>
 </body>
 </html>

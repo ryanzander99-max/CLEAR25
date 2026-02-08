@@ -357,7 +357,10 @@ def api_unregister_device(request):
 
 # ── Subscription / Payment endpoints ────────────────────────────────
 
-PLAN_PRICES = {"pro": 29, "business": 99}
+PLAN_PRICES = {
+    "pro":      {"monthly": 29,  "yearly": 290},   # yearly ≈ $24/mo, save 17%
+    "business": {"monthly": 99,  "yearly": 948},   # yearly ≈ $79/mo, save 20%
+}
 
 
 @csrf_exempt
@@ -375,10 +378,16 @@ def api_create_payment(request):
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
         plan = data.get("plan", "")
+        period = data.get("period", "monthly")
         if plan not in PLAN_PRICES:
             return JsonResponse({"error": f"Invalid plan. Choose: {', '.join(PLAN_PRICES.keys())}"}, status=400)
+        if period not in ("monthly", "yearly"):
+            return JsonResponse({"error": "Invalid period. Choose: monthly, yearly"}, status=400)
 
-        amount = PLAN_PRICES[plan]
+        amount = PLAN_PRICES[plan][period]
+        days = 365 if period == "yearly" else 30
+        period_label = "12 months" if period == "yearly" else "30 days"
+
         api_key = getattr(settings, "NOWPAYMENTS_API_KEY", "")
         if not api_key:
             return JsonResponse({"error": "Payment system not configured"}, status=503)
@@ -394,8 +403,8 @@ def api_create_payment(request):
             json={
                 "price_amount": amount,
                 "price_currency": "usd",
-                "order_id": f"{request.user.id}_{plan}_{int(timezone.now().timestamp())}",
-                "order_description": f"CLEAR25 {plan.title()} Plan - 30 days",
+                "order_id": f"{request.user.id}_{plan}_{period}_{int(timezone.now().timestamp())}",
+                "order_description": f"CLEAR25 {plan.title()} Plan - {period_label}",
                 "success_url": "https://clear25.xyz/dashboard/?tab=billing&status=success",
                 "cancel_url": "https://clear25.xyz/dashboard/?tab=billing&status=cancelled",
                 "ipn_callback_url": "https://clear25.xyz/api/v1/subscribe/webhook/",
@@ -409,6 +418,7 @@ def api_create_payment(request):
         Payment.objects.create(
             user=request.user,
             plan=plan,
+            billing_period=period,
             amount_usd=amount,
             nowpayments_id=str(invoice.get("id", "")),
             status="waiting",
@@ -465,9 +475,10 @@ def api_payment_webhook(request):
             payment.save()
 
             # Upgrade user plan
+            days = 365 if payment.billing_period == "yearly" else 30
             profile = payment.user.profile
             profile.plan = payment.plan
-            profile.plan_expires = timezone.now() + datetime.timedelta(days=30)
+            profile.plan_expires = timezone.now() + datetime.timedelta(days=days)
             profile.save(update_fields=["plan", "plan_expires"])
         except Payment.DoesNotExist:
             pass

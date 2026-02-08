@@ -201,10 +201,14 @@ class DeviceToken(models.Model):
         return f"{self.platform}: {self.token[:20]}..."
 
 
+BILLING_PERIOD_CHOICES = [("monthly", "Monthly"), ("yearly", "Yearly")]
+
+
 class Payment(models.Model):
     """Tracks crypto payments via NOWPayments."""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payments")
     plan = models.CharField(max_length=10, choices=PLAN_CHOICES)
+    billing_period = models.CharField(max_length=10, choices=BILLING_PERIOD_CHOICES, default="monthly")
     amount_usd = models.DecimalField(max_digits=10, decimal_places=2)
     nowpayments_id = models.CharField(max_length=100, unique=True)
     status = models.CharField(max_length=20, default="waiting")  # waiting, confirming, confirmed, failed

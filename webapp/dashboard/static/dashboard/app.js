@@ -1227,6 +1227,35 @@ document.querySelectorAll(".sidebar-tab").forEach(t => {
 // BILLING / SUBSCRIPTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
+let billingPeriod = "monthly";
+
+function toggleBillingPeriod() {
+    billingPeriod = billingPeriod === "monthly" ? "yearly" : "monthly";
+    const isYearly = billingPeriod === "yearly";
+
+    // Toggle knob position
+    const knob = document.getElementById("billing-toggle-knob");
+    if (knob) knob.style.transform = isYearly ? "translateX(22px)" : "translateX(0)";
+
+    // Toggle label colors
+    const labelM = document.getElementById("billing-label-monthly");
+    const labelY = document.getElementById("billing-label-yearly");
+    if (labelM) labelM.style.color = isYearly ? "#71717a" : "#fff";
+    if (labelY) labelY.style.color = isYearly ? "#fff" : "#71717a";
+
+    // Show/hide save badge
+    const badge = document.getElementById("billing-save-badge");
+    if (badge) badge.style.display = isYearly ? "inline-block" : "none";
+
+    // Toggle price displays
+    document.querySelectorAll(".billing-price-monthly").forEach(el => {
+        el.style.display = isYearly ? "none" : "flex";
+    });
+    document.querySelectorAll(".billing-price-yearly").forEach(el => {
+        el.style.display = isYearly ? "block" : "none";
+    });
+}
+
 async function subscribeToPlan(plan, btnEl) {
     const btn = btnEl || (window.event && window.event.target);
     if (!btn) return;
@@ -1238,7 +1267,7 @@ async function subscribeToPlan(plan, btnEl) {
         const resp = await fetch("/api/v1/subscribe/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ plan }),
+            body: JSON.stringify({ plan, period: billingPeriod }),
         });
 
         let data;

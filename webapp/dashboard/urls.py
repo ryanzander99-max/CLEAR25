@@ -22,6 +22,7 @@ urlpatterns = [
     # Settings
     path("settings/", views.settings_page, name="settings"),
     path("api/settings/profile/", views.api_update_profile),
+    path("api/settings/downgrade/", views.api_downgrade_plan),
     path("api/settings/delete-account/", views.api_delete_account),
     # Public API v1
     path("developers/", views.api_docs, name="api_docs"),
