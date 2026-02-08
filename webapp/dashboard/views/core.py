@@ -20,7 +20,20 @@ from ..models import ReadingSnapshot, CachedResult
 def index(request):
     """Render the main dashboard page."""
     cities = list(services.CITIES.keys())
-    return render(request, "dashboard/index.html", {"cities": cities})
+    current_plan = "free"
+    plan_expires = None
+    if request.user.is_authenticated:
+        try:
+            profile = request.user.profile
+            current_plan = profile.active_plan
+            plan_expires = profile.plan_expires
+        except Exception:
+            pass
+    return render(request, "dashboard/index.html", {
+        "cities": cities,
+        "current_plan": current_plan,
+        "plan_expires": plan_expires,
+    })
 
 
 @cache_page(60 * 5)  # Cache for 5 minutes
