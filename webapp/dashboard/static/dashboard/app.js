@@ -466,6 +466,7 @@ function updateMapMarkers(results) {
         const marker = L.marker([st.lat, st.lon], { icon: createCircleIcon(color, size, shouldPulse) }).addTo(map);
         marker.bindPopup(`
             <div class="popup-name">${st.city_name}</div>
+            <div class="popup-meta">${st.id}</div>
             <div class="popup-meta">${city} · ${st.distance.toFixed(0)} km ${st.direction} · Tier ${st.tier}</div>
             ${popupExtra}
         `);
