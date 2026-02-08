@@ -1227,8 +1227,9 @@ document.querySelectorAll(".sidebar-tab").forEach(t => {
 // BILLING / SUBSCRIPTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
-async function subscribeToPlan(plan) {
-    const btn = event.target;
+async function subscribeToPlan(plan, btnEl) {
+    const btn = btnEl || (window.event && window.event.target);
+    if (!btn) return;
     const originalText = btn.textContent;
     btn.disabled = true;
     btn.textContent = "Creating invoice...";
@@ -1239,7 +1240,15 @@ async function subscribeToPlan(plan) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ plan }),
         });
-        const data = await resp.json();
+
+        let data;
+        const text = await resp.text();
+        try { data = JSON.parse(text); } catch (e) {
+            showBillingMsg("error", `Server error (${resp.status}). Please try again.`);
+            btn.disabled = false;
+            btn.textContent = originalText;
+            return;
+        }
 
         if (resp.ok && data.invoice_url) {
             btn.textContent = "Redirecting...";
@@ -1252,7 +1261,7 @@ async function subscribeToPlan(plan) {
             btn.textContent = originalText;
         }
     } catch (err) {
-        showBillingMsg("error", "Network error. Please check your connection.");
+        showBillingMsg("error", "Network error: " + err.message);
         btn.disabled = false;
         btn.textContent = originalText;
     }

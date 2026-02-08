@@ -954,7 +954,7 @@
                             {% if current_plan == "pro" %}
                                 <button style="all:unset;cursor:default;display:flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;background:rgba(255,255,255,0.06);color:#71717a;text-align:center;" disabled>Current Plan</button>
                             {% else %}
-                                <button onclick="subscribeToPlan('pro')" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;background:#fff;color:#000;text-align:center;transition:all 0.15s;">Upgrade to Pro</button>
+                                <button onclick="subscribeToPlan('pro', this)" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;background:#fff;color:#000;text-align:center;transition:all 0.15s;">Upgrade to Pro</button>
                             {% endif %}
                         </div>
 
@@ -988,7 +988,7 @@
                             {% if current_plan == "business" %}
                                 <button style="all:unset;cursor:default;display:flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;background:rgba(255,255,255,0.06);color:#71717a;text-align:center;" disabled>Current Plan</button>
                             {% else %}
-                                <button onclick="subscribeToPlan('business')" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;background:#a855f7;color:#fff;text-align:center;transition:all 0.15s;">Upgrade to Business</button>
+                                <button onclick="subscribeToPlan('business', this)" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;background:#a855f7;color:#fff;text-align:center;transition:all 0.15s;">Upgrade to Business</button>
                             {% endif %}
                         </div>
                     </div>
@@ -1039,7 +1039,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{% static 'dashboard/app.js' %}?v=30"></script>
+    <script src="{% static 'dashboard/app.js' %}?v=31"></script>
     <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
