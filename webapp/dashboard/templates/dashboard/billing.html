@@ -1,0 +1,698 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing — CLEAR25</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'dashboard/favicon.svg' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}?v=32">
+    <style>
+        .billing-page {
+            min-height: 100vh;
+            background: #000;
+            padding: 40px 24px;
+        }
+
+        .billing-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .billing-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #71717a;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            transition: color 0.15s;
+        }
+
+        .billing-back:hover {
+            color: #fff;
+        }
+
+        .billing-header {
+            margin-bottom: 40px;
+        }
+
+        .billing-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .billing-header p {
+            color: #71717a;
+            font-size: 15px;
+        }
+
+        /* Current plan banner */
+        .current-plan-banner {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .current-plan-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .current-plan-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-free {
+            background: rgba(113, 113, 122, 0.15);
+            color: #a1a1aa;
+        }
+
+        .badge-pro {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        .badge-business {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+        }
+
+        .current-plan-label {
+            font-size: 14px;
+            color: #a1a1aa;
+        }
+
+        .current-plan-label strong {
+            color: #fff;
+        }
+
+        .plan-expiry {
+            font-size: 13px;
+            color: #71717a;
+        }
+
+        /* Pricing grid */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .pricing-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 28px 24px;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.2s;
+        }
+
+        .pricing-card:hover {
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .pricing-card.active {
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .pricing-card.popular {
+            border-color: rgba(168, 85, 247, 0.3);
+            position: relative;
+        }
+
+        .popular-tag {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #a855f7;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 3px 12px;
+            border-radius: 20px;
+        }
+
+        .pricing-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .pricing-desc {
+            font-size: 13px;
+            color: #71717a;
+            margin-bottom: 20px;
+        }
+
+        .pricing-amount {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 24px;
+        }
+
+        .pricing-dollar {
+            font-size: 36px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.03em;
+        }
+
+        .pricing-period {
+            font-size: 14px;
+            color: #71717a;
+        }
+
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 28px;
+            flex: 1;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #a1a1aa;
+            padding: 6px 0;
+        }
+
+        .pricing-features li svg {
+            flex-shrink: 0;
+            color: #22c55e;
+        }
+
+        .pricing-btn {
+            all: unset;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.15s;
+            text-align: center;
+        }
+
+        .pricing-btn-current {
+            background: rgba(255,255,255,0.06);
+            color: #71717a;
+            cursor: default;
+        }
+
+        .pricing-btn-upgrade {
+            background: #fff;
+            color: #000;
+        }
+
+        .pricing-btn-upgrade:hover {
+            background: #e4e4e7;
+        }
+
+        .pricing-btn-upgrade:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pricing-btn-business {
+            background: #a855f7;
+            color: #fff;
+        }
+
+        .pricing-btn-business:hover {
+            background: #9333ea;
+        }
+
+        .pricing-btn-business:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Payment info */
+        .payment-info {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .payment-info h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .payment-info p {
+            font-size: 14px;
+            color: #a1a1aa;
+            line-height: 1.6;
+        }
+
+        .crypto-icons {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .crypto-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #a1a1aa;
+        }
+
+        /* Status messages */
+        .billing-msg {
+            font-size: 13px;
+            font-weight: 500;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .billing-msg.success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            display: block;
+        }
+
+        .billing-msg.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            display: block;
+        }
+
+        .billing-msg.info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            display: block;
+        }
+
+        /* Comparison table */
+        .compare-section {
+            margin-bottom: 40px;
+        }
+
+        .compare-section h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .compare-table th,
+        .compare-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .compare-table th {
+            color: #71717a;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .compare-table td {
+            color: #a1a1aa;
+        }
+
+        .compare-table td:first-child {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .compare-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .current-plan-banner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .compare-table {
+                font-size: 13px;
+            }
+
+            .compare-table th,
+            .compare-table td {
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="billing-page">
+        <div class="billing-container">
+            <a href="/dashboard/" class="billing-back">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+                Back to Dashboard
+            </a>
+
+            <div class="billing-header">
+                <h1>Billing & Plans</h1>
+                <p>Manage your API subscription and payment settings</p>
+            </div>
+
+            <!-- Status message (shown after payment redirect) -->
+            <div class="billing-msg" id="billing-msg"></div>
+
+            <!-- Current Plan Banner -->
+            <div class="current-plan-banner">
+                <div class="current-plan-info">
+                    <span class="current-plan-badge badge-{{ current_plan }}" id="plan-badge">{{ current_plan|upper }}</span>
+                    <span class="current-plan-label">
+                        <strong>Current Plan</strong>
+                        {% if current_plan != "free" and plan_expires %}
+                            &middot; Renews {{ plan_expires|date:"M j, Y" }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% if current_plan != "free" %}
+                    <span class="plan-expiry" id="plan-expiry">
+                        Expires {{ plan_expires|date:"M j, Y" }}
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Pricing Cards -->
+            <div class="pricing-grid">
+                <!-- Free -->
+                <div class="pricing-card {% if current_plan == 'free' %}active{% endif %}">
+                    <div class="pricing-name">Free</div>
+                    <div class="pricing-desc">For personal projects and testing</div>
+                    <div class="pricing-amount">
+                        <span class="pricing-dollar">$0</span>
+                        <span class="pricing-period">/month</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            100 requests / hour
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            1 API key
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            All endpoints
+                        </li>
+                    </ul>
+                    {% if current_plan == "free" %}
+                        <button class="pricing-btn pricing-btn-current" disabled>Current Plan</button>
+                    {% else %}
+                        <button class="pricing-btn pricing-btn-current" disabled>Free Tier</button>
+                    {% endif %}
+                </div>
+
+                <!-- Pro -->
+                <div class="pricing-card {% if current_plan == 'pro' %}active{% endif %}">
+                    <div class="pricing-name">Pro</div>
+                    <div class="pricing-desc">For production apps and integrations</div>
+                    <div class="pricing-amount">
+                        <span class="pricing-dollar">$29</span>
+                        <span class="pricing-period">/month</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            1,000 requests / hour
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            5 API keys
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            All endpoints
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Priority support
+                        </li>
+                    </ul>
+                    {% if current_plan == "pro" %}
+                        <button class="pricing-btn pricing-btn-current" disabled>Current Plan</button>
+                    {% else %}
+                        <button class="pricing-btn pricing-btn-upgrade" onclick="subscribeToPlan('pro')">Upgrade to Pro</button>
+                    {% endif %}
+                </div>
+
+                <!-- Business -->
+                <div class="pricing-card popular {% if current_plan == 'business' %}active{% endif %}">
+                    <span class="popular-tag">Most Popular</span>
+                    <div class="pricing-name">Business</div>
+                    <div class="pricing-desc">For high-traffic apps and enterprises</div>
+                    <div class="pricing-amount">
+                        <span class="pricing-dollar">$99</span>
+                        <span class="pricing-period">/month</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            10,000 requests / hour
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            20 API keys
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            All endpoints
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Priority support
+                        </li>
+                    </ul>
+                    {% if current_plan == "business" %}
+                        <button class="pricing-btn pricing-btn-current" disabled>Current Plan</button>
+                    {% else %}
+                        <button class="pricing-btn pricing-btn-business" onclick="subscribeToPlan('business')">Upgrade to Business</button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="compare-section">
+                <h2>Compare Plans</h2>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden;">
+                    <table class="compare-table">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Free</th>
+                                <th>Pro</th>
+                                <th>Business</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Rate Limit</td>
+                                <td>100 / hr</td>
+                                <td>1,000 / hr</td>
+                                <td>10,000 / hr</td>
+                            </tr>
+                            <tr>
+                                <td>API Keys</td>
+                                <td>1</td>
+                                <td>5</td>
+                                <td>20</td>
+                            </tr>
+                            <tr>
+                                <td>Live Data</td>
+                                <td>Yes</td>
+                                <td>Yes</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>Station Data</td>
+                                <td>Yes</td>
+                                <td>Yes</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>City Data</td>
+                                <td>Yes</td>
+                                <td>Yes</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>Priority Support</td>
+                                <td>-</td>
+                                <td>Yes</td>
+                                <td>Yes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payment Info -->
+            <div class="payment-info">
+                <h2>Payment Methods</h2>
+                <p>We accept cryptocurrency payments via NOWPayments. When you subscribe, you'll be redirected to a secure payment page where you can pay with any major cryptocurrency. Subscriptions are valid for 30 days from the time of payment.</p>
+                <div class="crypto-icons">
+                    <span class="crypto-chip">BTC</span>
+                    <span class="crypto-chip">ETH</span>
+                    <span class="crypto-chip">USDT</span>
+                    <span class="crypto-chip">USDC</span>
+                    <span class="crypto-chip">LTC</span>
+                    <span class="crypto-chip">SOL</span>
+                    <span class="crypto-chip">+ 100 more</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check URL params for payment status
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const status = params.get("status");
+            const msgEl = document.getElementById("billing-msg");
+
+            if (status === "success") {
+                msgEl.className = "billing-msg info";
+                msgEl.textContent = "Payment submitted! Your plan will be upgraded once the transaction is confirmed on the blockchain. This usually takes a few minutes.";
+                // Poll for plan upgrade
+                pollPlanStatus();
+            } else if (status === "cancelled") {
+                msgEl.className = "billing-msg error";
+                msgEl.textContent = "Payment was cancelled. You can try again anytime.";
+            }
+
+            // Clean URL
+            if (status) {
+                window.history.replaceState({}, "", "/billing/");
+            }
+        })();
+
+        async function subscribeToPlan(plan) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Creating invoice...";
+
+            try {
+                const resp = await fetch("/api/v1/subscribe/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ plan }),
+                });
+                const data = await resp.json();
+
+                if (resp.ok && data.invoice_url) {
+                    btn.textContent = "Redirecting...";
+                    window.open(data.invoice_url, "_blank");
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                } else {
+                    const msgEl = document.getElementById("billing-msg");
+                    msgEl.className = "billing-msg error";
+                    msgEl.textContent = data.error || "Failed to create payment. Please try again.";
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            } catch (err) {
+                const msgEl = document.getElementById("billing-msg");
+                msgEl.className = "billing-msg error";
+                msgEl.textContent = "Network error. Please check your connection.";
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        async function pollPlanStatus() {
+            let attempts = 0;
+            const maxAttempts = 60; // Poll for up to 10 minutes
+            const interval = setInterval(async () => {
+                attempts++;
+                if (attempts > maxAttempts) {
+                    clearInterval(interval);
+                    return;
+                }
+
+                try {
+                    const resp = await fetch("/api/v1/subscribe/status/");
+                    const data = await resp.json();
+
+                    if (data.plan && data.plan !== "free") {
+                        clearInterval(interval);
+                        const msgEl = document.getElementById("billing-msg");
+                        msgEl.className = "billing-msg success";
+                        msgEl.textContent = `Your plan has been upgraded to ${data.plan.charAt(0).toUpperCase() + data.plan.slice(1)}!`;
+                        // Reload after a moment to update the UI
+                        setTimeout(() => window.location.reload(), 2000);
+                    }
+                } catch (err) {
+                    // Silently retry
+                }
+            }, 10000); // Every 10 seconds
+        }
+    </script>
+</body>
+</html>

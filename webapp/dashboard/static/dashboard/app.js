@@ -974,6 +974,17 @@ async function loadApiKeys() {
         const data = await keysResp.json();
         const keys = data.keys || [];
 
+        // Show plan badge
+        const planBadge = document.getElementById("api-plan-badge");
+        if (planBadge && data.plan) {
+            const planColors = { free: { bg: "rgba(113,113,122,0.15)", color: "#a1a1aa" }, pro: { bg: "rgba(59,130,246,0.15)", color: "#60a5fa" }, business: { bg: "rgba(168,85,247,0.15)", color: "#c084fc" } };
+            const pc = planColors[data.plan] || planColors.free;
+            planBadge.style.background = pc.bg;
+            planBadge.style.color = pc.color;
+            planBadge.textContent = data.plan;
+            planBadge.style.display = "inline-block";
+        }
+
         if (keys.length === 0) {
             if (emptyEl) {
                 emptyEl.textContent = "No API keys yet. Create one to get started.";

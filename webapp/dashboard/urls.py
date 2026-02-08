@@ -33,4 +33,10 @@ urlpatterns = [
     # Push notifications
     path("api/push/register/", views.api_register_device),
     path("api/push/unregister/", views.api_unregister_device),
+    # Subscriptions
+    path("api/v1/subscribe/", views.api_create_payment),
+    path("api/v1/subscribe/webhook/", views.api_payment_webhook),
+    path("api/v1/subscribe/status/", views.api_subscription_status),
+    # Billing page
+    path("billing/", views.billing_page, name="billing"),
 ]

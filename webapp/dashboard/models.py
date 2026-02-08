@@ -7,10 +7,41 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 
+PLAN_CHOICES = [
+    ("free", "Free"),
+    ("pro", "Pro"),
+    ("business", "Business"),
+]
+
+PLAN_LIMITS = {
+    "free":     {"rate_limit": 100,   "max_keys": 1},
+    "pro":      {"rate_limit": 1000,  "max_keys": 5},
+    "business": {"rate_limit": 10000, "max_keys": 20},
+}
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     last_fetch_time = models.DateTimeField(null=True, blank=True)
     last_fetch_results = models.JSONField(null=True, blank=True)
+    plan = models.CharField(max_length=10, choices=PLAN_CHOICES, default="free")
+    plan_expires = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def active_plan(self):
+        if self.plan == "free":
+            return "free"
+        if self.plan_expires and self.plan_expires < timezone.now():
+            return "free"  # Expired
+        return self.plan
+
+    @property
+    def rate_limit(self):
+        return PLAN_LIMITS[self.active_plan]["rate_limit"]
+
+    @property
+    def max_api_keys(self):
+        return PLAN_LIMITS[self.active_plan]["max_keys"]
 
     def can_fetch(self):
         if self.last_fetch_time is None:
@@ -45,25 +76,32 @@ class APIKey(models.Model):
     hour_started = models.DateTimeField(null=True, blank=True)
     total_requests = models.IntegerField(default=0)
 
-    RATE_LIMIT = 100  # requests per hour per key
-
     def save(self, *args, **kwargs):
         if not self.key:
             self.key = secrets.token_hex(32)  # 64-char hex string
         super().save(*args, **kwargs)
 
+    def get_rate_limit(self):
+        """Get rate limit based on user's plan."""
+        try:
+            return self.user.profile.rate_limit
+        except UserProfile.DoesNotExist:
+            return PLAN_LIMITS["free"]["rate_limit"]
+
     def check_rate_limit(self):
         """Check and update rate limit. Returns (allowed, remaining, reset_seconds)."""
         now = timezone.now()
+        rate_limit = self.get_rate_limit()
+
         # Reset if hour has passed
         if not self.hour_started or (now - self.hour_started).total_seconds() >= 3600:
             self.hour_started = now
             self.requests_this_hour = 0
 
-        remaining = max(0, self.RATE_LIMIT - self.requests_this_hour)
+        remaining = max(0, rate_limit - self.requests_this_hour)
         reset_seconds = int(3600 - (now - self.hour_started).total_seconds())
 
-        if self.requests_this_hour >= self.RATE_LIMIT:
+        if self.requests_this_hour >= rate_limit:
             return False, 0, reset_seconds
 
         self.requests_this_hour += 1
@@ -161,6 +199,22 @@ class DeviceToken(models.Model):
 
     def __str__(self):
         return f"{self.platform}: {self.token[:20]}..."
+
+
+class Payment(models.Model):
+    """Tracks crypto payments via NOWPayments."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payments")
+    plan = models.CharField(max_length=10, choices=PLAN_CHOICES)
+    amount_usd = models.DecimalField(max_digits=10, decimal_places=2)
+    nowpayments_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=20, default="waiting")  # waiting, confirming, confirmed, failed
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.plan} - {self.status}"
 
 
 @receiver(post_save, sender=User)

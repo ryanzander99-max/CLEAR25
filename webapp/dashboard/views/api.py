@@ -2,6 +2,7 @@
 Public API v1 endpoints for CLEAR25.
 """
 
+import datetime
 from functools import wraps
 
 from django.http import JsonResponse
@@ -10,8 +11,10 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+from django.conf import settings
+
 from .. import services
-from ..models import APIKey, CachedResult, DeviceToken
+from ..models import APIKey, CachedResult, DeviceToken, Payment, PLAN_LIMITS
 
 
 # Level name to integer mapping (matches Toronto PM2.5 Methodology v3.0)
@@ -44,11 +47,12 @@ def require_api_key(view_func):
         # Check rate limit
         allowed, remaining, reset = api_key.check_rate_limit()
         if not allowed:
+            rate_limit = api_key.get_rate_limit()
             response = JsonResponse({
                 "error": "Rate limit exceeded",
                 "retry_after": reset
             }, status=429)
-            response["X-RateLimit-Limit"] = str(APIKey.RATE_LIMIT)
+            response["X-RateLimit-Limit"] = str(rate_limit)
             response["X-RateLimit-Remaining"] = "0"
             response["X-RateLimit-Reset"] = str(reset)
             return response
@@ -57,7 +61,8 @@ def require_api_key(view_func):
         response = view_func(request, *args, **kwargs)
 
         # Add rate limit headers to successful responses
-        response["X-RateLimit-Limit"] = str(APIKey.RATE_LIMIT)
+        rate_limit = api_key.get_rate_limit()
+        response["X-RateLimit-Limit"] = str(rate_limit)
         response["X-RateLimit-Remaining"] = str(remaining)
         response["X-RateLimit-Reset"] = str(reset)
         return response
@@ -159,6 +164,18 @@ def api_v1_cities(request):
     })
 
 
+def billing_page(request):
+    """Render the billing/subscription page."""
+    if not request.user.is_authenticated:
+        from django.shortcuts import redirect
+        return redirect("/accounts/google/login/")
+    profile = request.user.profile
+    return render(request, "dashboard/billing.html", {
+        "current_plan": profile.active_plan,
+        "plan_expires": profile.plan_expires,
+    })
+
+
 def api_docs(request):
     """Render the API documentation page."""
     # Get user's API keys if authenticated
@@ -183,10 +200,11 @@ def api_create_key(request):
 
     # GET: List user's API keys with rate limit info
     if request.method == "GET":
+        profile = request.user.profile
         api_keys = request.user.api_keys.filter(is_active=True)
+        rate_limit = profile.rate_limit
         keys = []
         for ak in api_keys:
-            # Calculate remaining requests
             now = timezone.now()
             has_active_window = ak.hour_started and (now - ak.hour_started).total_seconds() < 3600
             if has_active_window:
@@ -194,27 +212,31 @@ def api_create_key(request):
                 reset_seconds = int(3600 - (now - ak.hour_started).total_seconds())
             else:
                 requests_used = 0
-                reset_seconds = 0  # No active window
-            remaining = max(0, APIKey.RATE_LIMIT - requests_used)
+                reset_seconds = 0
+            remaining = max(0, rate_limit - requests_used)
 
             keys.append({
                 "key": ak.key,
                 "name": ak.name,
                 "created_at": ak.created_at.isoformat() if ak.created_at else None,
                 "last_used": ak.last_used.isoformat() if ak.last_used else None,
-                "rate_limit": APIKey.RATE_LIMIT,
+                "rate_limit": rate_limit,
                 "requests_used": requests_used,
                 "requests_remaining": remaining,
                 "reset_seconds": reset_seconds,
                 "has_active_window": has_active_window,
                 "total_requests": ak.total_requests,
             })
-        return JsonResponse({"keys": keys})
+        return JsonResponse({
+            "keys": keys,
+            "plan": profile.active_plan,
+            "max_keys": profile.max_api_keys,
+        })
 
     # POST: Create new key
-    # Limit to 5 keys per user
-    if request.user.api_keys.filter(is_active=True).count() >= 5:
-        return JsonResponse({"error": "Maximum 5 API keys allowed"}, status=400)
+    max_keys = request.user.profile.max_api_keys
+    if request.user.api_keys.filter(is_active=True).count() >= max_keys:
+        return JsonResponse({"error": f"Maximum {max_keys} API key{'s' if max_keys > 1 else ''} allowed on your plan"}, status=400)
 
     import json
     try:
@@ -324,3 +346,144 @@ def api_unregister_device(request):
         return JsonResponse({"ok": True})
     except DeviceToken.DoesNotExist:
         return JsonResponse({"ok": True})  # Idempotent
+
+
+# ── Subscription / Payment endpoints ────────────────────────────────
+
+PLAN_PRICES = {"pro": 29, "business": 99}
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_create_payment(request):
+    """Create a NOWPayments invoice for a plan upgrade."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Authentication required"}, status=401)
+
+    import json
+    try:
+        data = json.loads(request.body) if request.body else {}
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    plan = data.get("plan", "")
+    if plan not in PLAN_PRICES:
+        return JsonResponse({"error": f"Invalid plan. Choose: {', '.join(PLAN_PRICES.keys())}"}, status=400)
+
+    amount = PLAN_PRICES[plan]
+    api_key = getattr(settings, "NOWPAYMENTS_API_KEY", "")
+    if not api_key:
+        return JsonResponse({"error": "Payment system not configured"}, status=503)
+
+    import requests as http_requests
+    try:
+        resp = http_requests.post(
+            "https://api.nowpayments.io/v1/invoice",
+            headers={
+                "x-api-key": api_key,
+                "Content-Type": "application/json",
+            },
+            json={
+                "price_amount": amount,
+                "price_currency": "usd",
+                "order_id": f"{request.user.id}_{plan}_{int(timezone.now().timestamp())}",
+                "order_description": f"CLEAR25 {plan.title()} Plan - 30 days",
+                "success_url": f"https://clear25.xyz/dashboard/?tab=billing&status=success",
+                "cancel_url": f"https://clear25.xyz/dashboard/?tab=billing&status=cancelled",
+                "ipn_callback_url": "https://clear25.xyz/api/v1/subscribe/webhook/",
+            },
+            timeout=15,
+        )
+        resp.raise_for_status()
+        invoice = resp.json()
+    except Exception as e:
+        return JsonResponse({"error": f"Payment service error: {str(e)}"}, status=502)
+
+    # Save payment record
+    Payment.objects.create(
+        user=request.user,
+        plan=plan,
+        amount_usd=amount,
+        nowpayments_id=str(invoice.get("id", "")),
+        status="waiting",
+    )
+
+    return JsonResponse({
+        "invoice_url": invoice.get("invoice_url"),
+        "invoice_id": invoice.get("id"),
+    })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_payment_webhook(request):
+    """NOWPayments IPN callback — verifies and upgrades plan."""
+    import json
+    import hashlib
+    import hmac
+
+    ipn_secret = getattr(settings, "NOWPAYMENTS_IPN_SECRET", "")
+    if not ipn_secret:
+        return JsonResponse({"error": "Not configured"}, status=503)
+
+    # Verify HMAC signature
+    sig = request.headers.get("x-nowpayments-sig", "")
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    # NOWPayments signature: HMAC-SHA512 of sorted JSON body
+    sorted_body = json.dumps(body, sort_keys=True, separators=(",", ":"))
+    expected_sig = hmac.new(
+        ipn_secret.encode(), sorted_body.encode(), hashlib.sha512
+    ).hexdigest()
+
+    if not hmac.compare_digest(sig, expected_sig):
+        return JsonResponse({"error": "Invalid signature"}, status=403)
+
+    # Process payment
+    payment_status = body.get("payment_status", "")
+    invoice_id = str(body.get("invoice_id", "") or body.get("order_id", ""))
+
+    if payment_status in ("finished", "confirmed"):
+        try:
+            payment = Payment.objects.get(nowpayments_id=invoice_id)
+            payment.status = "confirmed"
+            payment.save()
+
+            # Upgrade user plan
+            profile = payment.user.profile
+            profile.plan = payment.plan
+            profile.plan_expires = timezone.now() + datetime.timedelta(days=30)
+            profile.save(update_fields=["plan", "plan_expires"])
+        except Payment.DoesNotExist:
+            pass
+
+    elif payment_status in ("failed", "expired"):
+        try:
+            payment = Payment.objects.get(nowpayments_id=invoice_id)
+            payment.status = "failed"
+            payment.save()
+        except Payment.DoesNotExist:
+            pass
+
+    return JsonResponse({"ok": True})
+
+
+@require_http_methods(["GET"])
+def api_subscription_status(request):
+    """Get current subscription status."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Authentication required"}, status=401)
+
+    profile = request.user.profile
+    plan = profile.active_plan
+    limits = PLAN_LIMITS[plan]
+
+    return JsonResponse({
+        "plan": plan,
+        "plan_expires": profile.plan_expires.isoformat() if profile.plan_expires else None,
+        "rate_limit": limits["rate_limit"],
+        "max_keys": limits["max_keys"],
+    })
