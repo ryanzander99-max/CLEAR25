@@ -51,6 +51,7 @@ from .api import (
     api_create_payment,
     api_payment_webhook,
     api_subscription_status,
+    api_test_upgrade,
     billing_page,
 )
 
@@ -94,5 +95,6 @@ __all__ = [
     "api_create_payment",
     "api_payment_webhook",
     "api_subscription_status",
+    "api_test_upgrade",
     "billing_page",
 ]

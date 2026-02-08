@@ -3,6 +3,7 @@ Public API v1 endpoints for CLEAR25.
 """
 
 import datetime
+import os
 from functools import wraps
 
 from django.http import JsonResponse
@@ -497,4 +498,53 @@ def api_subscription_status(request):
         "plan_expires": profile.plan_expires.isoformat() if profile.plan_expires else None,
         "rate_limit": limits["rate_limit"],
         "max_keys": limits["max_keys"],
+    })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_test_upgrade(request):
+    """TEST ONLY: Simulate a plan upgrade without payment.
+
+    Protected by CRON_SECRET. Usage:
+      curl -X POST https://clear25.xyz/api/v1/subscribe/test/ \
+           -H "Authorization: Bearer <CRON_SECRET>" \
+           -H "Content-Type: application/json" \
+           -d '{"user_id": 1, "plan": "pro"}'
+    """
+    cron_secret = os.environ.get("CRON_SECRET", "")
+    auth_header = request.headers.get("Authorization", "")
+    if not cron_secret or auth_header != f"Bearer {cron_secret}":
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    import json
+    try:
+        data = json.loads(request.body) if request.body else {}
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    plan = data.get("plan", "")
+    if plan not in ("pro", "business"):
+        return JsonResponse({"error": "plan must be 'pro' or 'business'"}, status=400)
+
+    user_id = data.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "user_id required"}, status=400)
+
+    from django.contrib.auth.models import User
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"error": f"User {user_id} not found"}, status=404)
+
+    profile = user.profile
+    profile.plan = plan
+    profile.plan_expires = timezone.now() + datetime.timedelta(days=30)
+    profile.save(update_fields=["plan", "plan_expires"])
+
+    return JsonResponse({
+        "ok": True,
+        "user": user.email or user.username,
+        "plan": plan,
+        "expires": profile.plan_expires.isoformat(),
     })

@@ -37,6 +37,7 @@ urlpatterns = [
     path("api/v1/subscribe/", views.api_create_payment),
     path("api/v1/subscribe/webhook/", views.api_payment_webhook),
     path("api/v1/subscribe/status/", views.api_subscription_status),
+    path("api/v1/subscribe/test/", views.api_test_upgrade),  # TEST: simulate upgrade
     # Billing page
     path("billing/", views.billing_page, name="billing"),
 ]
