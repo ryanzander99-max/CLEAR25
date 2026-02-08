@@ -363,26 +363,26 @@ PLAN_PRICES = {"pro": 29, "business": 99}
 @require_http_methods(["POST"])
 def api_create_payment(request):
     """Create a NOWPayments invoice for a plan upgrade."""
-    if not request.user.is_authenticated:
-        return JsonResponse({"error": "Authentication required"}, status=401)
-
-    import json
     try:
-        data = json.loads(request.body) if request.body else {}
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Authentication required"}, status=401)
 
-    plan = data.get("plan", "")
-    if plan not in PLAN_PRICES:
-        return JsonResponse({"error": f"Invalid plan. Choose: {', '.join(PLAN_PRICES.keys())}"}, status=400)
+        import json
+        try:
+            data = json.loads(request.body) if request.body else {}
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    amount = PLAN_PRICES[plan]
-    api_key = getattr(settings, "NOWPAYMENTS_API_KEY", "")
-    if not api_key:
-        return JsonResponse({"error": "Payment system not configured"}, status=503)
+        plan = data.get("plan", "")
+        if plan not in PLAN_PRICES:
+            return JsonResponse({"error": f"Invalid plan. Choose: {', '.join(PLAN_PRICES.keys())}"}, status=400)
 
-    import requests as http_requests
-    try:
+        amount = PLAN_PRICES[plan]
+        api_key = getattr(settings, "NOWPAYMENTS_API_KEY", "")
+        if not api_key:
+            return JsonResponse({"error": "Payment system not configured"}, status=503)
+
+        import requests as http_requests
         resp = http_requests.post(
             "https://api.nowpayments.io/v1/invoice",
             headers={
@@ -402,22 +402,26 @@ def api_create_payment(request):
         )
         resp.raise_for_status()
         invoice = resp.json()
+
+        # Save payment record
+        Payment.objects.create(
+            user=request.user,
+            plan=plan,
+            amount_usd=amount,
+            nowpayments_id=str(invoice.get("id", "")),
+            status="waiting",
+        )
+
+        return JsonResponse({
+            "invoice_url": invoice.get("invoice_url"),
+            "invoice_id": invoice.get("id"),
+        })
     except Exception as e:
-        return JsonResponse({"error": f"Payment service error: {str(e)}"}, status=502)
-
-    # Save payment record
-    Payment.objects.create(
-        user=request.user,
-        plan=plan,
-        amount_usd=amount,
-        nowpayments_id=str(invoice.get("id", "")),
-        status="waiting",
-    )
-
-    return JsonResponse({
-        "invoice_url": invoice.get("invoice_url"),
-        "invoice_id": invoice.get("id"),
-    })
+        import traceback
+        return JsonResponse({
+            "error": f"{type(e).__name__}: {str(e)}",
+            "trace": traceback.format_exc(),
+        }, status=500)
 
 
 @csrf_exempt
