@@ -710,7 +710,7 @@ body {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 12px;
-    margin-top: 24px;
+    margin-top: 0;
 }
 
 .city-card {
@@ -940,7 +940,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 24px;
+    margin-top: 0;
     flex-wrap: wrap;
 }
 
@@ -1074,7 +1074,7 @@ body {
 /* ============================================================
    RESEARCH TAB
    ============================================================ */
-.research { margin-top: 24px; }
+.research { margin-top: 0; }
 
 .research-nav {
     display: flex;
@@ -1105,7 +1105,7 @@ body {
     box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
 }
 
-.research-section { display: none; margin-top: 20px; }
+.research-section { display: none; margin-top: 12px; }
 .research-visible { display: block; }
 
 .research-card {
@@ -1404,6 +1404,7 @@ body {
    API DOCS
    ============================================================ */
 
+
 .api-docs code {
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
@@ -1495,7 +1496,7 @@ body {
    FEEDBACK BOARD
    ============================================================ */
 
-.feedback-board { margin-top: 32px; }
+.feedback-board { margin-top: 0; }
 
 .feedback-header {
     display: flex;
@@ -1944,5 +1945,173 @@ body {
 
     .comment-form textarea {
         width: 100%;
+    }
+}
+
+/* ============================================================
+   MOBILE — Bottom tab bar & responsive layout (≤768px)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    /* ---- Sidebar → Bottom Tab Bar ---- */
+    .sidebar {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: auto;
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        border-right: none;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding: 0;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background: rgba(0,0,0,0.92);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+
+    .sidebar-top {
+        flex: 1;
+        flex-direction: row;
+        gap: 0;
+        min-width: 0;
+    }
+
+    .sidebar-brand {
+        display: none;
+    }
+
+    .sidebar-tabs {
+        flex-direction: row;
+        padding: 0;
+        gap: 0;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .sidebar-tab {
+        flex: 1;
+        flex-direction: column;
+        gap: 0;
+        padding: 16px 0;
+        height: auto;
+        max-width: none;
+        justify-content: center;
+        align-items: center;
+        border-radius: 0;
+    }
+
+    .sidebar-tab span {
+        display: none;
+    }
+
+    .sidebar-tab svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    .sidebar-tab.tab-active {
+        background: transparent;
+        color: var(--accent-color, #fff);
+    }
+
+    .sidebar-tab.tab-active::after {
+        content: '';
+        position: absolute;
+        bottom: 2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--accent-color, #fff);
+        transition: background 0.3s ease;
+    }
+
+    .sidebar-tab:hover {
+        background: transparent;
+    }
+
+    /* ---- Account section in bottom bar ---- */
+    .sidebar-bottom {
+        margin-top: 0;
+        padding: 0 4px 0 0;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        padding-top: 0;
+    }
+
+    .sidebar-account {
+        width: auto;
+        height: auto;
+        padding: 10px 8px 8px;
+        justify-content: center;
+    }
+
+    .account-avatar {
+        width: 26px;
+        height: 26px;
+        font-size: 11px;
+    }
+
+    .sidebar-signin {
+        width: auto;
+        height: auto;
+        padding: 10px 12px 8px;
+        font-size: 0;
+        gap: 0;
+        background: transparent;
+    }
+
+    .sidebar-signin svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    /* Account dropdown: open upward from bottom bar */
+    .account-dropdown-up .account-menu {
+        bottom: calc(100% + 12px);
+        right: 0;
+        left: auto;
+        min-width: 200px;
+    }
+
+    /* ---- Main content: full width ---- */
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 8px 16px 90px;
+    }
+
+    /* ---- General mobile polish: normalize top spacing ---- */
+    .city-cards,
+    .feedback-board,
+    .research,
+    .map-controls {
+        margin-top: 0;
+    }
+
+    .research-section {
+        margin-top: 16px;
+    }
+
+    .research-h1 {
+        font-size: 22px;
+    }
+
+    .research-card {
+        padding: 20px 16px;
+    }
+
+    .research-intro {
+        font-size: 14px;
+    }
+
+    .api-docs .research-h1 {
+        font-size: 20px;
     }
 }
