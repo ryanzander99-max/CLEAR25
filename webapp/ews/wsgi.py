@@ -10,6 +10,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ews.settings")
 
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
+app = application  # Alias for Vercel
 
 # Run migrations at runtime if tables are missing (Vercel serverless)
 _migrated = False
