@@ -915,6 +915,8 @@ function timeAgo(isoString) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 let apiKeysLoaded = false;
+let apiKeyTimers = {};
+let apiKeyTimerInterval = null;
 
 // Accent colors for API keys (Vercel-style dark backgrounds)
 const API_KEY_COLORS = [
@@ -983,8 +985,23 @@ async function loadApiKeys() {
         // Hide empty message when we have keys
         if (emptyEl) emptyEl.style.display = "none";
 
+        // Clear old timers
+        if (apiKeyTimerInterval) { clearInterval(apiKeyTimerInterval); apiKeyTimerInterval = null; }
+        apiKeyTimers = {};
+
+        const now = Date.now();
         listEl.innerHTML = keys.map((k, idx) => {
             const accentColor = API_KEY_COLORS[idx % API_KEY_COLORS.length];
+            const keyId = k.key.substring(0, 8);
+
+            const hasActiveWindow = k.has_active_window && k.reset_seconds > 0;
+            if (hasActiveWindow) {
+                apiKeyTimers[keyId] = { resetTime: now + (k.reset_seconds * 1000), active: true };
+            }
+            const timerText = hasActiveWindow
+                ? `Resets in ${Math.floor(k.reset_seconds / 60)}m ${k.reset_seconds % 60}s · ${k.requests_used}/${k.rate_limit} used`
+                : "Ready · No active rate limit";
+            const timerColor = hasActiveWindow ? "#71717a" : "#22c55e";
 
             return `
             <div class="api-key-item" style="background:${accentColor.bg};border:1px solid ${accentColor.border}40;border-left:3px solid ${accentColor.border};border-radius:8px;margin-bottom:12px;overflow:hidden;">
@@ -993,6 +1010,7 @@ async function loadApiKeys() {
                         <div style="font-weight:500;color:#fafafa;margin-bottom:4px;">${escapeHtml(k.name || 'Unnamed key')}</div>
                         <code style="font-family:'JetBrains Mono',monospace;font-size:12px;color:${accentColor.border};word-break:break-all;">${k.key.substring(0, 12)}...${k.key.substring(k.key.length - 6)}</code>
                         <div style="font-size:11px;color:#71717a;margin-top:4px;">Created ${timeAgo(k.created_at)}${k.last_used ? ' · Last used ' + timeAgo(k.last_used) : ''}</div>
+                        <div id="timer-${keyId}" style="font-size:11px;color:${timerColor};margin-top:4px;">${timerText}</div>
                     </div>
                     <div style="display:flex;gap:8px;margin-left:16px;">
                         <button onclick="copyApiKey('${k.key}')" class="action-btn action-secondary" style="padding:6px 12px;font-size:12px;">
@@ -1007,6 +1025,31 @@ async function loadApiKeys() {
                 </div>
             </div>`;
         }).join("");
+
+        // Start countdown timers
+        const hasActiveTimers = Object.values(apiKeyTimers).some(t => t.active);
+        if (hasActiveTimers) {
+            apiKeyTimerInterval = setInterval(() => {
+                const now = Date.now();
+                let allDone = true;
+                for (const [keyId, td] of Object.entries(apiKeyTimers)) {
+                    if (!td.active) continue;
+                    const el = document.getElementById(`timer-${keyId}`);
+                    if (!el) continue;
+                    const ms = td.resetTime - now;
+                    if (ms <= 0) {
+                        el.textContent = "Ready · Rate limit reset";
+                        el.style.color = "#22c55e";
+                        td.active = false;
+                    } else {
+                        allDone = false;
+                        const s = Math.floor(ms / 1000);
+                        el.textContent = `Resets in ${Math.floor(s / 60)}m ${s % 60}s`;
+                    }
+                }
+                if (allDone) { clearInterval(apiKeyTimerInterval); apiKeyTimerInterval = null; }
+            }, 1000);
+        }
     } catch (e) {
         console.error("Failed to load API keys:", e);
         if (emptyEl) emptyEl.textContent = "Failed to load API keys";
