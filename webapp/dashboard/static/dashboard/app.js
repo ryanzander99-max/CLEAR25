@@ -996,7 +996,7 @@ async function loadApiKeys() {
 
             const hasActiveWindow = k.has_active_window && k.reset_seconds > 0;
             if (hasActiveWindow) {
-                apiKeyTimers[keyId] = { resetTime: now + (k.reset_seconds * 1000), active: true };
+                apiKeyTimers[keyId] = { resetTime: now + (k.reset_seconds * 1000), active: true, used: k.requests_used, limit: k.rate_limit };
             }
             const timerText = hasActiveWindow
                 ? `Resets in ${Math.floor(k.reset_seconds / 60)}m ${k.reset_seconds % 60}s · ${k.requests_used}/${k.rate_limit} used`
@@ -1044,7 +1044,7 @@ async function loadApiKeys() {
                     } else {
                         allDone = false;
                         const s = Math.floor(ms / 1000);
-                        el.textContent = `Resets in ${Math.floor(s / 60)}m ${s % 60}s`;
+                        el.textContent = `Resets in ${Math.floor(s / 60)}m ${s % 60}s · ${td.used}/${td.limit} used`;
                     }
                 }
                 if (allDone) { clearInterval(apiKeyTimerInterval); apiKeyTimerInterval = null; }
