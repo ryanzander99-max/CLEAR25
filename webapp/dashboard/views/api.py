@@ -14,9 +14,9 @@ from .. import services
 from ..models import APIKey, CachedResult, DeviceToken
 
 
-# Level name to integer mapping
+# Level name to integer mapping (matches Toronto PM2.5 Methodology v3.0)
 LEVEL_MAP = {
-    "NONE": 1,
+    "LOW": 1,
     "MODERATE": 2,
     "HIGH": 3,
     "VERY HIGH": 4,

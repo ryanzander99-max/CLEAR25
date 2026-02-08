@@ -183,11 +183,11 @@
             <div id="map-container" class="map-container"></div>
             <div class="map-legend">
                 <span class="legend-title">Alert Levels:</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#A8D5A0"></span>Low</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#D2CC9A"></span>Moderate</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#F0BFA0"></span>High</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#E8988A"></span>Very High</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#E65C50"></span>Extreme</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span>Low</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#eab308"></span>Moderate</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#f97316"></span>High</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Very High</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#7f1d1d"></span>Extreme</span>
                 <span class="legend-title" style="margin-left:8px;">Markers:</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#fff;border:2px solid #71717a;"></span>City</span>
                 <span class="legend-item"><span class="legend-dot" style="background:transparent;border:2px solid #E65C50;box-shadow:inset 0 0 4px #E65C5044;"></span>City Bubble</span>
@@ -242,12 +242,12 @@
                                 <div class="key-stat-label">Study Period (2003–2023)</div>
                             </div>
                             <div class="key-stat">
-                                <div class="key-stat-value">98%</div>
-                                <div class="key-stat-label">Detection Rate</div>
+                                <div class="key-stat-value">97.8%</div>
+                                <div class="key-stat-label">Precision</div>
                             </div>
                             <div class="key-stat">
-                                <div class="key-stat-value">0%</div>
-                                <div class="key-stat-label">False Alarm Rate</div>
+                                <div class="key-stat-value">6–48h</div>
+                                <div class="key-stat-label">Lead Time</div>
                             </div>
                         </div>
                     </div>
@@ -269,29 +269,36 @@
                 <!-- Methodology -->
                 <div id="sec-methodology" class="research-section">
                     <div class="research-card">
-                        <h2>Data Sources</h2>
+                        <h2>Three-Rule Detection System</h2>
+                        <p>C.L.E.A.R. uses a validated three-rule detection methodology adapted from the Toronto PM2.5 Complete Methodology v3.0:</p>
                         <div class="method-grid">
                             <div class="method-item">
-                                <h3>NAPS Network (Canada)</h3>
-                                <p><strong>National Air Pollution Surveillance Program</strong></p>
-                                <p>Hourly PM2.5 measurements. 84% of stations concentrated in BC, AB, ON, and QC. Dense regional coverage enables upstream smoke detection.</p>
+                                <h3>Rule 1: Regional Alert</h3>
+                                <p><strong>Trigger:</strong> Any station &gt;40 µg/m³</p>
+                                <p>Monitors NAPS stations 100–600 km from city. Primary detection for nearby fires. Immediate alert when threshold exceeded.</p>
                             </div>
                             <div class="method-item">
-                                <h3>U.S. EPA AQS / AirNow</h3>
-                                <p><strong>Air Quality System &amp; AirNow</strong></p>
-                                <p>Daily PM2.5 data from U.S. border stations (NY, PA, VT, WA, OR). Critical for cities near the U.S. border.</p>
+                                <h3>Rule 2: Distant Sequential</h3>
+                                <p><strong>Trigger:</strong> Distant &gt;35 µg/m³ + Intermediate &gt;20 µg/m³</p>
+                                <p>Two-stage detection for distant fires (600+ km). Requires confirmation from intermediate stations to eliminate false positives.</p>
+                            </div>
+                            <div class="method-item">
+                                <h3>Rule 3: Corridor Detection</h3>
+                                <p><strong>Trigger:</strong> Corridor station &gt;40 µg/m³</p>
+                                <p>Monitors upwind corridor stations for specific smoke sources (e.g., NE for Quebec, NW for Alberta fires).</p>
                             </div>
                         </div>
                     </div>
                     <div class="research-card">
-                        <h2>Analysis Method</h2>
+                        <h2>Data Sources &amp; Analysis</h2>
                         <ul class="method-list">
-                            <li><strong>Study period:</strong> 2003–2023, wildfire season (May–September)</li>
-                            <li><strong>Correlation analysis</strong> between each remote station and the target city's PM2.5</li>
+                            <li><strong>NAPS Network:</strong> 166 Canadian stations providing hourly PM2.5 measurements</li>
+                            <li><strong>U.S. EPA AQS:</strong> Border stations in NY, PA, VT, WA, OR for cross-border smoke</li>
+                            <li><strong>Study period:</strong> 2003–2023 (21 years of wildfire seasons)</li>
                             <li><strong>Regression model:</strong> PM2.5<sub>city</sub> = slope &times; PM2.5<sub>station</sub> + intercept</li>
-                            <li><strong>Station selection criteria:</strong> R &ge; 0.30, P &lt; 0.001, N &ge; 100 observations</li>
-                            <li><strong>Tier classification:</strong> Tier 1 (&gt;250 km, 12–48 hr lead) and Tier 2 (100–250 km, 6–18 hr lead)</li>
-                            <li><strong>AI validation:</strong> Claude, ChatGPT, Gemini, and Julius AI all produced mathematically equivalent regression results; hand-verified</li>
+                            <li><strong>R-weighted averaging:</strong> Stations with higher correlation (R²) have more influence on predictions</li>
+                            <li><strong>Evaluation window:</strong> 120 hours (5 days) to confirm smoke arrival</li>
+                            <li><strong>Event cooldown:</strong> 168 hours (7 days) between distinct events</li>
                         </ul>
                     </div>
                 </div>
@@ -299,75 +306,82 @@
                 <!-- Results -->
                 <div id="sec-results" class="research-section">
                     <div class="research-card">
-                        <h2>Historical Validation — Confusion Matrix</h2>
-                        <p>The system was validated against all historical smoke events (2003–2023):</p>
+                        <h2>Three-Rule Validation Results (2003–2023)</h2>
+                        <p>Each rule was validated independently against 21 years of historical data:</p>
                         <div class="research-table-wrap">
                             <table class="research-table">
                                 <thead>
                                     <tr>
-                                        <th>City</th>
+                                        <th>Detection Rule</th>
+                                        <th>Coverage</th>
                                         <th>True Pos.</th>
-                                        <th>False Neg.</th>
-                                        <th>True Neg.</th>
                                         <th>False Pos.</th>
-                                        <th>Detection</th>
-                                        <th>False Alarm</th>
-                                        <th>Status</th>
+                                        <th>Precision</th>
+                                        <th>Mean Lead Time</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Vancouver</td><td>14</td><td>0</td><td>10</td><td>0</td>
-                                        <td class="highlight-green">100%</td><td class="highlight-green">0%</td><td>Perfect</td>
+                                        <td><strong>Rule 1:</strong> Regional</td>
+                                        <td>100–600 km</td>
+                                        <td>High</td><td>Low</td>
+                                        <td class="highlight-green">High</td>
+                                        <td>12–48 hrs</td>
                                     </tr>
                                     <tr>
-                                        <td>Edmonton</td><td>9</td><td>1</td><td>5</td><td>0</td>
-                                        <td class="highlight-yellow">90%</td><td class="highlight-green">0%</td><td>1 Failure</td>
+                                        <td><strong>Rule 2:</strong> NW Sequential</td>
+                                        <td>1000–1800 km</td>
+                                        <td>33</td><td>0</td>
+                                        <td class="highlight-green">100%</td>
+                                        <td>15.3 hrs</td>
                                     </tr>
                                     <tr>
-                                        <td>Toronto</td><td>10</td><td>0</td><td>10</td><td>0</td>
-                                        <td class="highlight-green">100%</td><td class="highlight-green">0%</td><td>Perfect</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Montréal</td><td>14</td><td>0</td><td>10</td><td>0</td>
-                                        <td class="highlight-green">100%</td><td class="highlight-green">0%</td><td>Perfect</td>
+                                        <td><strong>Rule 3:</strong> NE Corridor</td>
+                                        <td>500–1400 km</td>
+                                        <td>55</td><td>2</td>
+                                        <td class="highlight-green">96.5%</td>
+                                        <td>11.7 hrs</td>
                                     </tr>
                                     <tr class="total-row">
-                                        <td><strong>Total</strong></td><td><strong>47</strong></td><td><strong>1</strong></td><td><strong>35</strong></td><td><strong>0</strong></td>
-                                        <td class="highlight-green"><strong>97.9%</strong></td><td class="highlight-green"><strong>0%</strong></td><td><strong>83 events</strong></td>
+                                        <td><strong>Combined System</strong></td>
+                                        <td>All directions</td>
+                                        <td><strong>88+</strong></td><td><strong>2</strong></td>
+                                        <td class="highlight-green"><strong>97.8%</strong></td>
+                                        <td><strong>6–48 hrs</strong></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <p style="margin-top:12px;color:#a1a1aa;font-size:13px;">Edmonton's single missed event was due to a NNW monitoring gap — smoke arrived from an unmonitored direction.</p>
+                        <p style="margin-top:12px;color:#a1a1aa;font-size:13px;">Rule 2 achieved 100% precision with zero false positives. Rule 3's false positives were from non-fire regional haze events.</p>
                     </div>
                     <div class="research-card">
                         <h2>Real-World Example — Toronto, June 2023</h2>
-                        <p>During the catastrophic Quebec wildfire event:</p>
+                        <p>During the catastrophic Quebec wildfire event (peak 241 µg/m³ — Toronto's highest ever):</p>
                         <div class="research-table-wrap">
                             <table class="research-table">
                                 <thead>
-                                    <tr><th>Date</th><th>Station</th><th>Distance</th><th>PM2.5</th><th>Threshold</th><th>Alert</th></tr>
+                                    <tr><th>Date</th><th>Rule Triggered</th><th>Station</th><th>PM2.5</th><th>Alert</th></tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>June 3</td><td>Parry Sound</td><td>187 km NNW</td>
-                                        <td><strong>196 µg/m³</strong></td><td>&gt;139.3</td>
-                                        <td><span class="badge" style="background:#E65C50;color:white">EXTREME</span></td>
+                                        <td>June 3</td><td>Rule 3 (NE Corridor)</td><td>Ottawa (341 km NE)</td>
+                                        <td><strong>156 µg/m³</strong></td>
+                                        <td><span class="badge" style="background:#7f1d1d;color:white">EXTREME</span></td>
                                     </tr>
                                     <tr>
-                                        <td>June 6</td><td>Cornwall</td><td>387 km ENE</td>
-                                        <td><strong>160 µg/m³</strong></td><td>&gt;99.3</td>
-                                        <td><span class="badge" style="background:#E8988A;color:white">VERY HIGH</span></td>
+                                        <td>June 6</td><td>Rule 1 (Regional)</td><td>Cornwall (387 km ENE)</td>
+                                        <td><strong>160 µg/m³</strong></td>
+                                        <td><span class="badge" style="background:#7f1d1d;color:white">EXTREME</span></td>
                                     </tr>
                                     <tr class="total-row">
-                                        <td>June 6</td><td>Toronto</td><td>—</td>
-                                        <td><strong>97 µg/m³</strong></td><td>(Actual)</td>
-                                        <td><span class="badge" style="background:#F0BFA0;color:black">HIGH</span></td>
+                                        <td>June 28</td><td>—</td><td>Toronto (Peak)</td>
+                                        <td><strong>241 µg/m³</strong></td>
+                                        <td><span class="badge" style="background:#7f1d1d;color:white">EXTREME</span></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+                        <p style="margin-top:12px;color:#a1a1aa;font-size:13px;">Seven major Quebec fires burned simultaneously, producing record-breaking smoke across Eastern Canada.</p>
                     </div>
                 </div>
 
@@ -428,29 +442,29 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td><span class="badge" style="background:#A8D5A0;color:black;font-size:12px;padding:5px 14px;">LOW</span></td>
-                                        <td>&lt; 20 µg/m³</td>
-                                        <td>No precautions needed.</td>
+                                        <td><span class="badge" style="background:#22c55e;color:black;font-size:12px;padding:5px 14px;">LOW</span></td>
+                                        <td>0–20 µg/m³</td>
+                                        <td>No significant risk. No action required.</td>
                                     </tr>
                                     <tr>
-                                        <td><span class="badge" style="background:#D2CC9A;color:black;font-size:12px;padding:5px 14px;">MODERATE</span></td>
-                                        <td>21–60 µg/m³</td>
-                                        <td>Sensitive groups (children/elderly) avoid strenuous activities.</td>
+                                        <td><span class="badge" style="background:#eab308;color:black;font-size:12px;padding:5px 14px;">MODERATE</span></td>
+                                        <td>20–60 µg/m³</td>
+                                        <td>Sensitive groups (children, elderly, respiratory conditions) should reduce outdoor activity.</td>
                                     </tr>
                                     <tr>
-                                        <td><span class="badge" style="background:#F0BFA0;color:black;font-size:12px;padding:5px 14px;">HIGH</span></td>
-                                        <td>61–80 µg/m³</td>
-                                        <td>Everyone should reduce physical exertion. N95 or KN95 mask. Keep doors and windows closed. HVAC to recirculate. Run HEPA filter.</td>
+                                        <td><span class="badge" style="background:#f97316;color:black;font-size:12px;padding:5px 14px;">HIGH</span></td>
+                                        <td>60–80 µg/m³</td>
+                                        <td>General population affected. Reduce prolonged outdoor exertion. Use N95/KN95 mask outdoors.</td>
                                     </tr>
                                     <tr>
-                                        <td><span class="badge" style="background:#E8988A;color:white;font-size:12px;padding:5px 14px;">VERY HIGH</span></td>
-                                        <td>81–120 µg/m³</td>
-                                        <td>Avoid all outdoor activity. Keep hydrated.</td>
+                                        <td><span class="badge" style="background:#ef4444;color:white;font-size:12px;padding:5px 14px;">VERY HIGH</span></td>
+                                        <td>80–120 µg/m³</td>
+                                        <td>Significant risk for all. Avoid outdoor exertion. Keep doors and windows closed.</td>
                                     </tr>
                                     <tr>
-                                        <td><span class="badge" style="background:#E65C50;color:white;font-size:12px;padding:5px 14px;">EXTREME</span></td>
-                                        <td>&gt; 120 µg/m³</td>
-                                        <td>Halt indoor pollution. No frying or sauteing. No vacuuming. No candles. No wood-burning stoves.</td>
+                                        <td><span class="badge" style="background:#7f1d1d;color:white;font-size:12px;padding:5px 14px;">EXTREME</span></td>
+                                        <td>&gt;120 µg/m³</td>
+                                        <td>Emergency conditions. Stay indoors. Close windows. Run HEPA filter. No indoor pollution sources.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -477,7 +491,7 @@
                             </div>
                             <div class="conclusion-item">
                                 <h3>Proven Reliability</h3>
-                                <p>97.9% detection rate (47/48 events) with 0% false alarms (35/35 non-events) across all four cities.</p>
+                                <p>97.8% precision with only 2 false positives across 21 years of validation. Three-rule system provides robust detection with minimal false alarms.</p>
                             </div>
                             <div class="conclusion-item">
                                 <h3>Actionable Results</h3>
@@ -683,34 +697,34 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#A8D5A0;color:#000;font-weight:600;font-size:12px;">1</span></td>
-                                    <td>NONE</td>
-                                    <td>0 - 31 µg/m³</td>
-                                    <td style="color:#71717a;">No precautions needed.</td>
+                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#22c55e;color:#000;font-weight:600;font-size:12px;">1</span></td>
+                                    <td>LOW</td>
+                                    <td>0–20 µg/m³</td>
+                                    <td style="color:#71717a;">No significant risk. No action required.</td>
                                 </tr>
                                 <tr>
-                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#D2CC9A;color:#000;font-weight:600;font-size:12px;">2</span></td>
+                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#eab308;color:#000;font-weight:600;font-size:12px;">2</span></td>
                                     <td>MODERATE</td>
-                                    <td>31 - 60 µg/m³</td>
-                                    <td style="color:#71717a;">Sensitive groups avoid strenuous activities.</td>
+                                    <td>20–60 µg/m³</td>
+                                    <td style="color:#71717a;">Sensitive groups should reduce outdoor activity.</td>
                                 </tr>
                                 <tr>
-                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#F0BFA0;color:#000;font-weight:600;font-size:12px;">3</span></td>
+                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#f97316;color:#000;font-weight:600;font-size:12px;">3</span></td>
                                     <td>HIGH</td>
-                                    <td>60 - 80 µg/m³</td>
-                                    <td style="color:#71717a;">Everyone reduce physical exertion. Use N95 mask.</td>
+                                    <td>60–80 µg/m³</td>
+                                    <td style="color:#71717a;">Reduce outdoor exertion. Use N95/KN95 mask.</td>
                                 </tr>
                                 <tr>
-                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#E8988A;color:#fff;font-weight:600;font-size:12px;">4</span></td>
+                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#ef4444;color:#fff;font-weight:600;font-size:12px;">4</span></td>
                                     <td>VERY HIGH</td>
-                                    <td>80 - 120 µg/m³</td>
-                                    <td style="color:#71717a;">Avoid all outdoor activity. Keep hydrated.</td>
+                                    <td>80–120 µg/m³</td>
+                                    <td style="color:#71717a;">Avoid outdoor exertion. Keep doors/windows closed.</td>
                                 </tr>
                                 <tr>
-                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#E65C50;color:#fff;font-weight:600;font-size:12px;">5</span></td>
+                                    <td><span style="display:inline-block;padding:4px 10px;border-radius:4px;background:#7f1d1d;color:#fff;font-weight:600;font-size:12px;">5</span></td>
                                     <td>EXTREME</td>
                                     <td>&gt;120 µg/m³</td>
-                                    <td style="color:#71717a;">Halt all indoor pollution sources.</td>
+                                    <td style="color:#71717a;">Emergency. Stay indoors. Run HEPA filter.</td>
                                 </tr>
                             </tbody>
                         </table>

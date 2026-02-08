@@ -15,25 +15,43 @@ DATA_DIR = settings.DATA_DIR
 CONFIG_PATH = os.path.join(DATA_DIR, "config.json")
 
 # ---------------------------------------------------------------------------
-# Alert levels & colors
+# Alert levels & colors (Toronto PM2.5 Methodology v3.0)
 # ---------------------------------------------------------------------------
 ALERT_LEVELS = [
-    {"name": "NONE",      "min": 0,   "max": 31,    "hex": "#A8D5A0", "text_color": "black",
-     "health": "No precautions needed."},
-    {"name": "MODERATE",  "min": 31,  "max": 60,    "hex": "#D2CC9A", "text_color": "black",
-     "health": "Sensitive groups (children/elderly) avoid strenuous activities."},
-    {"name": "HIGH",      "min": 60,  "max": 80,    "hex": "#F0BFA0", "text_color": "black",
-     "health": "Everyone should reduce physical exertion. N95 or KN95 mask. Keep doors and windows closed. HVAC to recirculate. Run HEPA filter."},
-    {"name": "VERY HIGH", "min": 80,  "max": 120,   "hex": "#E8988A", "text_color": "white",
-     "health": "Avoid all outdoor activity. Keep hydrated."},
-    {"name": "EXTREME",   "min": 120, "max": 1e9,   "hex": "#E65C50", "text_color": "white",
-     "health": "Halt indoor pollution. No frying or sauteing. No vacuuming. No candles. No wood-burning stoves."},
+    {"name": "LOW",       "min": 0,   "max": 20,    "hex": "#22c55e", "text_color": "black",
+     "health": "No significant risk. No action required."},
+    {"name": "MODERATE",  "min": 20,  "max": 60,    "hex": "#eab308", "text_color": "black",
+     "health": "Sensitive groups (children, elderly, respiratory conditions) should reduce outdoor activity."},
+    {"name": "HIGH",      "min": 60,  "max": 80,    "hex": "#f97316", "text_color": "black",
+     "health": "General population affected. Reduce prolonged outdoor exertion. Use N95/KN95 mask outdoors."},
+    {"name": "VERY HIGH", "min": 80,  "max": 120,   "hex": "#ef4444", "text_color": "white",
+     "health": "Significant risk for all. Avoid outdoor exertion. Keep doors and windows closed."},
+    {"name": "EXTREME",   "min": 120, "max": 1e9,   "hex": "#7f1d1d", "text_color": "white",
+     "health": "Emergency conditions. Stay indoors. Close windows. Run HEPA filter. No indoor pollution sources."},
 ]
 
-# Alert rule thresholds
-RULE1_THRESHOLD = 55    # Single station >= 55 → immediate alert
-RULE2_PRIMARY = 35      # Dual-station: Station A sustained threshold
-RULE2_SECONDARY = 25    # Dual-station: Station B corroboration threshold
+# ---------------------------------------------------------------------------
+# Three-Rule Detection System (adapted from Toronto PM2.5 Methodology v3.0)
+# ---------------------------------------------------------------------------
+# Rule 1: Regional Station Alert - Any station > 40 µg/m³ triggers alert
+# Rule 2: Distant Sequential Detection - Distant trigger + intermediate confirmation
+# Rule 3: Corridor Detection - Upwind corridor stations for specific smoke sources
+
+# Rule 1: Regional station trigger threshold
+RULE1_TRIGGER = 40  # µg/m³ - Regional station exceeds this → evaluation begins
+
+# Rule 2: Distant sequential detection thresholds
+RULE2_DISTANT_TRIGGER = 35   # µg/m³ - Distant station (1000+ km) trigger
+RULE2_INTERMEDIATE = 20      # µg/m³ - Intermediate station confirmation threshold
+
+# Rule 3: Corridor detection threshold
+RULE3_CORRIDOR_TRIGGER = 40  # µg/m³ - Corridor station trigger
+
+# Common thresholds
+CITY_ELEVATED_THRESHOLD = 20  # µg/m³ - City PM2.5 level that confirms smoke arrival
+EVALUATION_WINDOW_HOURS = 120  # 5 days - Time window to check for city elevation
+EVENT_COOLDOWN_HOURS = 168     # 7 days - Minimum separation between events
+CONFIRMATION_WINDOW_HOURS = 96  # 4 days - Time for intermediate confirmation (Rule 2)
 
 # Station IDs to exclude (too far from target city to be useful)
 EXCLUDED_STATION_IDS = {"50308", "50310", "50314"}
@@ -225,12 +243,24 @@ def get_alert_level(pm25):
 
 
 def lead_time_str(tier, dist):
-    if tier == 1:
-        if dist > 500:  return "24-48 hrs"
-        if dist > 350:  return "18-36 hrs"
-        return "12-24 hrs"
-    if dist > 150:  return "8-18 hrs"
-    return "6-12 hrs"
+    """Calculate estimated lead time based on station distance and tier.
+
+    Lead times based on Toronto PM2.5 Methodology v3.0:
+    - Distant stations (1000+ km): 15-92 hours (avg 15.3h)
+    - Regional stations (100-600 km): 0-48 hours (varies by wind)
+    - Corridor stations (300-500 km): 0-24 hours (often simultaneous)
+    """
+    if dist > 1000:
+        return "24-72 hrs"
+    if dist > 600:
+        return "18-48 hrs"
+    if dist > 400:
+        return "12-36 hrs"
+    if dist > 250:
+        return "8-24 hrs"
+    if dist > 150:
+        return "4-18 hrs"
+    return "2-12 hrs"
 
 
 def _weighted_prediction(city_rows):
@@ -259,10 +289,15 @@ def _weighted_prediction(city_rows):
 
 
 def evaluate(stations, readings, previous_readings=None):
-    """Evaluate stations and check alert rules.
+    """Evaluate stations using 3-rule detection system.
+
+    Three-Rule Detection (adapted from Toronto PM2.5 Methodology v3.0):
+    - Rule 1: Regional Alert - Any station > 40 µg/m³ (immediate trigger)
+    - Rule 2: Distant Sequential - Distant station > 35 µg/m³ + intermediate > 20 µg/m³
+    - Rule 3: Corridor Detection - Upwind corridor station > 40 µg/m³
 
     previous_readings: dict of {station_id: pm25} from the previous hour,
-                       used for Rule 2 (dual-station sustained check).
+                       used for Rule 2 (sequential confirmation).
 
     Predictions are weighted by R-value (correlation coefficient) so that
     more reliable stations have greater influence on city-level predictions.
@@ -291,7 +326,7 @@ def evaluate(stations, readings, previous_readings=None):
         })
     results.sort(key=lambda x: x["predicted"], reverse=True)
 
-    # --- City-level alert determination ---
+    # --- City-level alert determination using 3-rule system ---
     # Group results by target city
     city_results = {}
     for r in results:
@@ -302,53 +337,78 @@ def evaluate(stations, readings, previous_readings=None):
     for city, city_rows in city_results.items():
         alert_triggered = False
         trigger_rule = None
+        trigger_stations = []
 
         # Calculate R-weighted prediction for this city
         weighted_pred = _weighted_prediction(city_rows)
         max_predicted = max((r["predicted"] for r in city_rows), default=0)
 
-        # Rule 1: any station >= 55 µg/m³
-        for r in city_rows:
-            if r["pm25"] >= RULE1_THRESHOLD:
+        # Categorize stations by distance (Tier indicates distance range)
+        # Tier 1: 100-600 km (regional) - Rule 1
+        # Tier 2+: Varies by city - can be distant or corridor
+        regional_stations = [r for r in city_rows if r["tier"] == 1 and r["dist"] <= 600]
+        distant_stations = [r for r in city_rows if r["dist"] > 600]
+        corridor_stations = [r for r in city_rows if r["tier"] >= 2 and r["dist"] <= 400]
+
+        # ═══════════════════════════════════════════════════════════════════
+        # Rule 1: Regional Station Alert (100-600 km)
+        # Any regional station > 40 µg/m³ triggers immediate alert
+        # ═══════════════════════════════════════════════════════════════════
+        for r in regional_stations:
+            if r["pm25"] >= RULE1_TRIGGER:
                 alert_triggered = True
                 trigger_rule = "rule1"
+                trigger_stations.append(r["station"])
                 break
 
-        # Rule 2: dual-station sustained (needs previous readings)
+        # ═══════════════════════════════════════════════════════════════════
+        # Rule 2: Distant Sequential Detection (600+ km)
+        # Distant station > 35 µg/m³ AND intermediate station > 20 µg/m³
+        # Uses previous readings to confirm smoke is moving toward city
+        # ═══════════════════════════════════════════════════════════════════
         if not alert_triggered and previous_readings:
-            # Stations currently >= 35 that were also >= 35 last hour
-            sustained_primary = [
-                r for r in city_rows
-                if r["pm25"] >= RULE2_PRIMARY
-                and previous_readings.get(r["id"], 0) >= RULE2_PRIMARY
+            # Check for distant trigger stations (> 35 µg/m³)
+            distant_triggers = [
+                r for r in distant_stations
+                if r["pm25"] >= RULE2_DISTANT_TRIGGER
             ]
-            # Stations currently >= 25 that were also >= 25 last hour
-            sustained_secondary = [
+            # Check for intermediate confirmation (> 20 µg/m³, sustained)
+            intermediate_confirmed = [
                 r for r in city_rows
-                if r["pm25"] >= RULE2_SECONDARY
-                and previous_readings.get(r["id"], 0) >= RULE2_SECONDARY
+                if 200 <= r["dist"] <= 600  # Intermediate range
+                and r["pm25"] >= RULE2_INTERMEDIATE
+                and previous_readings.get(r["id"], 0) >= RULE2_INTERMEDIATE
             ]
-            # Need at least one primary AND a *different* secondary
-            for primary in sustained_primary:
-                for secondary in sustained_secondary:
-                    if primary["id"] != secondary["id"]:
-                        alert_triggered = True
-                        trigger_rule = "rule2"
-                        break
-                if alert_triggered:
+            # Need distant trigger AND intermediate confirmation
+            if distant_triggers and intermediate_confirmed:
+                alert_triggered = True
+                trigger_rule = "rule2"
+                trigger_stations = [distant_triggers[0]["station"], intermediate_confirmed[0]["station"]]
+
+        # ═══════════════════════════════════════════════════════════════════
+        # Rule 3: Corridor Detection (upwind stations < 400 km)
+        # Corridor station > 40 µg/m³ indicates smoke entering from
+        # specific direction (e.g., NE for Quebec smoke, NW for Alberta)
+        # ═══════════════════════════════════════════════════════════════════
+        if not alert_triggered:
+            for r in corridor_stations:
+                if r["pm25"] >= RULE3_CORRIDOR_TRIGGER:
+                    alert_triggered = True
+                    trigger_rule = "rule3"
+                    trigger_stations.append(r["station"])
                     break
 
         # Use weighted prediction for city-level alert determination
-        # This gives more weight to stations with higher R-values (better correlation)
         alert_prediction = weighted_pred
 
         if alert_triggered:
             lvl = get_alert_level(alert_prediction)
-            # Only issue alert if predicted >= 31 (MODERATE or above)
-            if lvl["name"] != "NONE":
+            # Only issue alert if predicted > 20 (above LOW threshold)
+            if lvl["name"] != "LOW":
                 city_alerts[city] = {
                     "alert": True,
                     "rule": trigger_rule,
+                    "trigger_stations": trigger_stations,
                     "predicted_pm25": round(alert_prediction, 1),
                     "weighted_pm25": round(weighted_pred, 1),
                     "max_pm25": round(max_predicted, 1),
@@ -359,17 +419,18 @@ def evaluate(stations, readings, previous_readings=None):
                 }
 
         if city not in city_alerts:
-            none_lvl = ALERT_LEVELS[0]
+            low_lvl = ALERT_LEVELS[0]
             city_alerts[city] = {
                 "alert": False,
                 "rule": None,
+                "trigger_stations": [],
                 "predicted_pm25": round(weighted_pred, 1),
                 "weighted_pm25": round(weighted_pred, 1),
                 "max_pm25": round(max_predicted, 1),
-                "level_name": none_lvl["name"],
-                "level_hex": none_lvl["hex"],
-                "level_text_color": none_lvl["text_color"],
-                "health": none_lvl["health"],
+                "level_name": low_lvl["name"],
+                "level_hex": low_lvl["hex"],
+                "level_text_color": low_lvl["text_color"],
+                "health": low_lvl["health"],
             }
 
     return {"stations": results, "city_alerts": city_alerts}

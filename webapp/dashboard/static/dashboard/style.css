@@ -1359,8 +1359,8 @@ body {
     border-top: 1px solid rgba(255,255,255,0.15);
 }
 
-.highlight-green { color: #A8D5A0; font-weight: 700; }
-.highlight-yellow { color: #D2CC9A; font-weight: 700; }
+.highlight-green { color: #22c55e; font-weight: 700; }
+.highlight-yellow { color: #eab308; font-weight: 700; }
 
 /* Conclusion grid */
 .conclusion-grid {

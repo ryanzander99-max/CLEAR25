@@ -453,7 +453,7 @@ function updateMapMarkers(results) {
         if (r) {
             color = r.level_hex;
             size = 12;
-            shouldPulse = r.level_name === "Extreme" || r.level_name === "Very High";
+            shouldPulse = r.level_name === "EXTREME" || r.level_name === "VERY HIGH";
             popupExtra = `
                 <div class="popup-divider"></div>
                 <div class="popup-row"><span class="popup-label">PM2.5</span><span class="popup-val">${r.pm25.toFixed(1)} µg/m³</span></div>
