@@ -1020,14 +1020,14 @@ body {
 
 /* Leaflet popup overrides */
 .leaflet-popup-content-wrapper {
-    background: rgba(255,255,255,0.03) !important;
+    background: #0a0a0a !important;
     color: #fff !important;
-    border: 1px solid rgba(255,255,255,0.15) !important;
+    border: 1px solid #27272a !important;
     border-radius: 12px !important;
     box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important;
 }
 
-.leaflet-popup-tip { background: rgba(255,255,255,0.03) !important; }
+.leaflet-popup-tip { background: #0a0a0a !important; }
 
 .leaflet-popup-content {
     font-family: 'Inter', sans-serif !important;
