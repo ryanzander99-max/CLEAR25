@@ -254,6 +254,6 @@ _NP_SANDBOX_IPN = os.environ.get("NOWPAYMENTS_SANDBOX_IPN_SECRET", "")
 NOWPAYMENTS_API_KEY = _NP_SANDBOX_KEY if NOWPAYMENTS_SANDBOX else _NP_LIVE_KEY
 NOWPAYMENTS_IPN_SECRET = _NP_SANDBOX_IPN if NOWPAYMENTS_SANDBOX else _NP_LIVE_IPN
 NOWPAYMENTS_API_URL = (
-    "https://api-sandbox.nowpayments.io" if NOWPAYMENTS_SANDBOX
+    "https://api.sandbox.nowpayments.io" if NOWPAYMENTS_SANDBOX
     else "https://api.nowpayments.io"
 )
