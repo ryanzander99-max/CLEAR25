@@ -30,3 +30,6 @@ staticfiles/
 node_modules/
 ios/
 android/
+
+# AI
+AGENTS.mds

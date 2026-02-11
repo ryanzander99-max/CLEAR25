@@ -44,40 +44,7 @@ When a remote station's PM2.5 reading exceeds a computed threshold, a colour-cod
 - Study period: 2003–2023, wildfire season (May–September)
 - 36M+ hourly observations from NAPS and U.S. EPA networks
 
-## Project Structure
-
-```
-ScienceFairApp/
-├── data/                          # Excel regression files & config
-│   ├── Toronto_PM25_EWS_Regression.xlsx
-│   ├── Montreal_PM25_EWS_Regression.xlsx
-│   ├── Edmonton_PM25_EWS_Regression.xlsx
-│   ├── Vancouver_PM25_EWS_Regression.xlsx
-│   └── config.json                # OpenAQ API key & location mapping
-└── webapp/                        # Django web app
-    ├── manage.py
-    ├── requirements.txt
-    ├── ews/                       # Django project settings
-    └── dashboard/                 # Main app
-        ├── services.py            # Core logic (station loading, regression, OpenAQ)
-        ├── views.py               # API endpoints
-        ├── templates/dashboard/
-        │   └── index.html
-        └── static/dashboard/
-            ├── style.css
-            └── app.js
-```
-
 ## Setup
-
-### Desktop App
-
-```bash
-pip install customtkinter openpyxl requests
-python src/main.py
-```
-
-### Web App
 
 ```bash
 pip install django openpyxl requests
@@ -114,7 +81,3 @@ Create `data/config.json` with your OpenAQ API key:
 - **NAPS** — National Air Pollution Surveillance Program (Environment Canada)
 - **U.S. EPA AQS / AirNow** — Border station data
 - **OpenAQ** — Live PM2.5 data API
-
-## Feedback
-
-Send feedback to ryanzander99@gmail.com
