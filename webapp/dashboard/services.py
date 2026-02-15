@@ -54,7 +54,7 @@ EVENT_COOLDOWN_HOURS = 168     # 7 days - Minimum separation between events
 CONFIRMATION_WINDOW_HOURS = 96  # 4 days - Time for intermediate confirmation (Rule 2)
 
 # Station IDs to exclude (too far from target city to be useful)
-EXCLUDED_STATION_IDS = {"50308", "50310", "50314", "50313"}
+EXCLUDED_STATION_IDS = {"50308", "50310", "50314", "50313", "55702"}
 
 CITIES = {
     "Toronto":   {"label": "Toronto",   "lat": 43.7479, "lon": -79.2741},
