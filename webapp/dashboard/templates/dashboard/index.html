@@ -111,8 +111,7 @@
                     </button>
                     <div class="account-menu" id="account-menu">
                         <div class="account-menu-header">
-                            <div class="account-menu-name">{{
-                                user.get_full_name|default:user.email|default:user.username }}</div>
+                            <div class="account-menu-name">{{ user.get_full_name|default:user.email|default:user.username }}</div>
                             <div class="account-menu-email">{{ user.email }}</div>
                         </div>
                         <div class="account-menu-divider"></div>
