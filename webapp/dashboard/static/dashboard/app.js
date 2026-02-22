@@ -1235,21 +1235,17 @@ function toggleBillingPeriod() {
     billingPeriod = billingPeriod === "monthly" ? "yearly" : "monthly";
     const isYearly = billingPeriod === "yearly";
 
-    // Toggle knob position
     const knob = document.getElementById("billing-toggle-knob");
     if (knob) knob.style.transform = isYearly ? "translateX(22px)" : "translateX(0)";
 
-    // Toggle label colors
     const labelM = document.getElementById("billing-label-monthly");
     const labelY = document.getElementById("billing-label-yearly");
     if (labelM) labelM.style.color = isYearly ? "#71717a" : "#fff";
     if (labelY) labelY.style.color = isYearly ? "#fff" : "#71717a";
 
-    // Show/hide save badge
     const badge = document.getElementById("billing-save-badge");
     if (badge) badge.style.display = isYearly ? "inline-block" : "none";
 
-    // Toggle price displays
     document.querySelectorAll(".billing-price-monthly").forEach(el => {
         el.style.display = isYearly ? "none" : "flex";
     });
@@ -1259,11 +1255,14 @@ function toggleBillingPeriod() {
 }
 
 async function subscribeToPlan(plan, btnEl) {
-    const btn = btnEl || (window.event && window.event.target);
+    const btn = btnEl;
     if (!btn) return;
     const originalText = btn.textContent;
     btn.disabled = true;
     btn.textContent = "Creating invoice...";
+
+    // Open blank window immediately (within user gesture) so mobile browsers don't block it
+    const payWindow = window.open("", "_blank");
 
     try {
         const resp = await fetch("/api/v1/subscribe/", {
@@ -1275,6 +1274,7 @@ async function subscribeToPlan(plan, btnEl) {
         let data;
         const text = await resp.text();
         try { data = JSON.parse(text); } catch (e) {
+            if (payWindow) payWindow.close();
             showBillingMsg("error", `Server error (${resp.status}). Please try again.`);
             btn.disabled = false;
             btn.textContent = originalText;
@@ -1283,15 +1283,22 @@ async function subscribeToPlan(plan, btnEl) {
 
         if (resp.ok && data.invoice_url) {
             btn.textContent = "Redirecting...";
-            window.open(data.invoice_url, "_blank");
+            if (payWindow) {
+                payWindow.location.href = data.invoice_url;
+            } else {
+                // Fallback if popup was blocked
+                window.location.href = data.invoice_url;
+            }
             btn.disabled = false;
             btn.textContent = originalText;
         } else {
+            if (payWindow) payWindow.close();
             showBillingMsg("error", data.error || "Failed to create payment. Please try again.");
             btn.disabled = false;
             btn.textContent = originalText;
         }
     } catch (err) {
+        if (payWindow) payWindow.close();
         showBillingMsg("error", "Network error: " + err.message);
         btn.disabled = false;
         btn.textContent = originalText;
