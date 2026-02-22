@@ -1,24 +1,107 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CLEAR25 — Wildfire Smoke Early Warning System</title>
-    <meta name="description" content="6-48 hours of advance warning before dangerous wildfire smoke arrives. Protecting Toronto, Edmonton, Montréal, and Vancouver.">
+    <meta name="description"
+        content="6-48 hours of advance warning before dangerous wildfire smoke arrives. Protecting Toronto, Edmonton, Montréal, and Vancouver.">
     <link rel="icon" type="image/svg+xml" href="{% static 'dashboard/favicon.svg' %}?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #000;
             color: #fff;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+        }
+
+        /* ========== Animations ========== */
+        @keyframes heroShimmer {
+            0% {
+                background-position: -200% center;
+            }
+
+            100% {
+                background-position: 200% center;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes subtlePulse {
+
+            0%,
+            100% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes floatIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Scroll reveal base */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
         }
 
         /* Navigation */
@@ -29,9 +112,17 @@
             right: 0;
             z-index: 100;
             background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            transition: background 0.3s, border-color 0.3s;
         }
+
+        .nav.scrolled {
+            background: rgba(0, 0, 0, 0.95);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
         .nav-inner {
             max-width: 1400px;
             margin: 0 auto;
@@ -41,6 +132,7 @@
             align-items: center;
             justify-content: space-between;
         }
+
         .nav-brand {
             display: flex;
             align-items: center;
@@ -48,55 +140,148 @@
             text-decoration: none;
             color: #fff;
         }
+
         .nav-logo {
             width: 28px;
             height: 28px;
+            transition: transform 0.3s;
         }
+
+        .nav-brand:hover .nav-logo {
+            transform: rotate(-8deg) scale(1.1);
+        }
+
         .nav-title {
             font-weight: 700;
             font-size: 18px;
             letter-spacing: -0.02em;
         }
+
         .nav-center {
             display: flex;
             align-items: center;
             gap: 32px;
         }
+
         .nav-link {
             font-size: 14px;
             font-weight: 500;
-            color: rgba(255,255,255,0.7);
+            color: rgba(255, 255, 255, 0.6);
             text-decoration: none;
-            transition: color 0.15s;
+            transition: color 0.2s;
+            position: relative;
         }
-        .nav-link:hover { color: #fff; }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            width: 0;
+            height: 1.5px;
+            background: #fff;
+            transition: width 0.25s ease, left 0.25s ease;
+            border-radius: 1px;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+            left: 0;
+        }
+
         .nav-right {
             display: flex;
             align-items: center;
             gap: 12px;
         }
+
         .nav-btn {
             padding: 8px 16px;
             font-size: 14px;
             font-weight: 500;
-            border-radius: 6px;
+            border-radius: 8px;
             text-decoration: none;
-            transition: all 0.15s;
-            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             color: #fff;
             background: transparent;
         }
+
         .nav-btn:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
         }
+
+        .nav-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
         .nav-btn-primary {
             background: #fff;
             color: #000;
             border-color: #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
         }
+
         .nav-btn-primary:hover {
-            background: rgba(255,255,255,0.9);
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Mobile menu */
+        .nav-hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            padding: 4px;
+            transition: opacity 0.2s;
+        }
+
+        .nav-hamburger:hover {
+            opacity: 0.7;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 64px;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px 24px;
+            z-index: 99;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .mobile-menu.open {
+            display: flex;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .mobile-menu a {
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .mobile-menu a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
         }
 
         /* Hero Section */
@@ -119,8 +304,8 @@
             right: 0;
             height: 400px;
             background-image:
-                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
             background-size: 80px 80px;
             mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
             -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
@@ -137,6 +322,7 @@
             height: 400px;
             overflow: hidden;
         }
+
         .rays-container {
             position: absolute;
             bottom: -100px;
@@ -145,6 +331,7 @@
             width: 1000px;
             height: 500px;
         }
+
         .ray {
             position: absolute;
             bottom: 0;
@@ -166,8 +353,9 @@
             border-left: 80px solid transparent;
             border-right: 80px solid transparent;
             border-bottom: 160px solid;
-            border-image: linear-gradient(to top, #fff 0%, rgba(255,255,255,0.3) 100%) 1;
+            border-image: linear-gradient(to top, #fff 0%, rgba(255, 255, 255, 0.3) 100%) 1;
         }
+
         .pyramid-glow {
             position: absolute;
             bottom: 0;
@@ -175,7 +363,7 @@
             transform: translateX(-50%);
             width: 200px;
             height: 200px;
-            background: radial-gradient(ellipse at center bottom, rgba(255,255,255,0.3) 0%, transparent 70%);
+            background: radial-gradient(ellipse at center bottom, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
         }
 
         /* Hero content */
@@ -184,27 +372,45 @@
             z-index: 10;
             text-align: center;
             max-width: 900px;
+            animation: floatIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+
         .hero-title {
             font-size: clamp(40px, 7vw, 72px);
             font-weight: 700;
             letter-spacing: -0.04em;
             line-height: 1.1;
             margin-bottom: 24px;
+            background: linear-gradient(90deg,
+                    #fff 0%,
+                    rgba(255, 255, 255, 0.5) 40%,
+                    #fff 50%,
+                    rgba(255, 255, 255, 0.5) 60%,
+                    #fff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: heroShimmer 6s ease-in-out infinite;
         }
+
         .hero-subtitle {
             font-size: clamp(16px, 2vw, 20px);
-            color: rgba(255,255,255,0.6);
-            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.55);
+            line-height: 1.7;
             max-width: 600px;
             margin: 0 auto 40px;
+            animation: floatIn 1s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
+
         .hero-actions {
             display: flex;
             gap: 16px;
             justify-content: center;
             flex-wrap: wrap;
+            animation: floatIn 1s 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
+
         .btn-primary {
             display: inline-flex;
             align-items: center;
@@ -214,35 +420,51 @@
             color: #000;
             font-size: 15px;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 10px;
             text-decoration: none;
-            transition: all 0.15s;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             border: 1px solid #fff;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
         }
+
         .btn-primary:hover {
-            background: rgba(255,255,255,0.9);
+            background: rgba(255, 255, 255, 0.92);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(255, 255, 255, 0.15);
         }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.97);
+        }
+
         .btn-primary svg {
             width: 16px;
             height: 16px;
         }
+
         .btn-secondary {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             padding: 14px 28px;
-            background: #000;
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             color: #fff;
             font-size: 15px;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 10px;
             text-decoration: none;
-            transition: all 0.15s;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
         .btn-secondary:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0) scale(0.97);
         }
 
         /* Stats bar */
@@ -255,19 +477,32 @@
             gap: 60px;
             flex-wrap: wrap;
             padding: 0 24px;
+            animation: floatIn 1s 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
+
         .stat-item {
             text-align: center;
+            transition: transform 0.3s;
         }
+
+        .stat-item:hover {
+            transform: translateY(-3px);
+        }
+
         .stat-value {
             font-size: 28px;
             font-weight: 700;
             letter-spacing: -0.02em;
             margin-bottom: 4px;
+            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+
         .stat-label {
             font-size: 13px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.45);
             font-weight: 500;
         }
 
@@ -275,65 +510,101 @@
         .features {
             padding: 120px 24px;
             background: #000;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
+
         .section-header {
             text-align: center;
             max-width: 600px;
             margin: 0 auto 60px;
         }
+
         .section-title {
             font-size: 36px;
             font-weight: 700;
             letter-spacing: -0.03em;
             margin-bottom: 16px;
         }
+
         .section-subtitle {
             font-size: 16px;
-            color: rgba(255,255,255,0.6);
-            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.55);
+            line-height: 1.7;
         }
+
         .features-grid {
             max-width: 1100px;
             margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
+            gap: 20px;
         }
+
         .feature-card {
             padding: 32px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
-            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
         }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.35s;
+            pointer-events: none;
+        }
+
         .feature-card:hover {
-            background: rgba(255,255,255,0.04);
-            border-color: rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
         }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
         .feature-icon {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;
             color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: background 0.3s, transform 0.3s;
         }
+
+        .feature-card:hover .feature-icon {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
         .feature-icon svg {
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
             stroke-width: 1.5;
         }
+
         .feature-title {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 12px;
             letter-spacing: -0.01em;
         }
+
         .feature-desc {
             font-size: 14px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.5);
             line-height: 1.7;
         }
 
@@ -341,36 +612,67 @@
         .cities {
             padding: 100px 24px;
             background: #000;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
+
         .cities-grid {
             max-width: 900px;
             margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 24px;
+            gap: 20px;
         }
+
         .city-card {
             text-align: center;
             padding: 32px 20px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
         }
+
+        .city-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 100%, rgba(34, 197, 94, 0.06) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.35s;
+            pointer-events: none;
+        }
+
+        .city-card:hover {
+            border-color: rgba(34, 197, 94, 0.25);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .city-card:hover::before {
+            opacity: 1;
+        }
+
         .city-name {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 8px;
         }
+
         .city-stat {
             font-size: 32px;
             font-weight: 700;
-            color: #22c55e;
+            background: linear-gradient(135deg, #22c55e, #4ade80);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
             margin-bottom: 4px;
         }
+
         .city-label {
             font-size: 12px;
-            color: rgba(255,255,255,0.4);
+            color: rgba(255, 255, 255, 0.4);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -379,31 +681,61 @@
         .cta {
             padding: 120px 24px;
             background: #000;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
+
         .cta-box {
-            max-width: 600px;
+            max-width: 640px;
             margin: 0 auto;
             text-align: center;
+            padding: 60px 40px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
         }
+
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 40%, transparent 60%, rgba(255, 255, 255, 0.08));
+            z-index: 0;
+            pointer-events: none;
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask-composite: xor;
+            -webkit-mask-composite: xor;
+            padding: 1px;
+        }
+
+        .cta-box>* {
+            position: relative;
+            z-index: 1;
+        }
+
         .cta-title {
             font-size: 36px;
             font-weight: 700;
             letter-spacing: -0.03em;
             margin-bottom: 16px;
         }
+
         .cta-subtitle {
             font-size: 16px;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255, 255, 255, 0.55);
             margin-bottom: 32px;
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
         /* Footer */
         .footer {
             padding: 32px 24px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
+
         .footer-inner {
             max-width: 1400px;
             margin: 0 auto;
@@ -413,54 +745,120 @@
             flex-wrap: wrap;
             gap: 24px;
         }
+
         .footer-brand {
             display: flex;
             align-items: center;
             gap: 10px;
         }
+
         .footer-logo {
             width: 24px;
             height: 24px;
         }
+
         .footer-name {
             font-weight: 600;
             font-size: 14px;
         }
+
         .footer-links {
             display: flex;
             gap: 24px;
         }
+
         .footer-link {
             font-size: 13px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.45);
             text-decoration: none;
-            transition: color 0.15s;
+            transition: color 0.2s;
+            position: relative;
         }
-        .footer-link:hover { color: #fff; }
+
+        .footer-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.5);
+            transition: width 0.25s;
+        }
+
+        .footer-link:hover {
+            color: #fff;
+        }
+
+        .footer-link:hover::after {
+            width: 100%;
+        }
+
         .footer-credit {
             font-size: 12px;
-            color: rgba(255,255,255,0.3);
+            color: rgba(255, 255, 255, 0.25);
         }
 
         /* Responsive */
         @media (max-width: 900px) {
-            .nav-center { display: none; }
-            .features-grid { grid-template-columns: 1fr; }
-            .cities-grid { grid-template-columns: repeat(2, 1fr); }
-            .stats-bar { gap: 32px; }
+            .nav-center {
+                display: none;
+            }
+
+            .nav-hamburger {
+                display: block;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cities-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stats-bar {
+                gap: 32px;
+            }
         }
+
         @media (max-width: 600px) {
-            .cities-grid { grid-template-columns: 1fr; }
-            .hero-actions { flex-direction: column; align-items: center; }
-            .btn-primary, .btn-secondary { width: 100%; max-width: 280px; justify-content: center; }
-            .stats-bar { flex-direction: column; gap: 24px; }
-            .footer-inner { flex-direction: column; text-align: center; }
+            .cities-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+                max-width: 280px;
+                justify-content: center;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .cta-box {
+                padding: 40px 24px;
+            }
         }
     </style>
 </head>
+
 <body>
     <!-- Navigation -->
-    <nav class="nav">
+    <nav class="nav" id="main-nav">
         <div class="nav-inner">
             <a href="/" class="nav-brand">
                 <img src="{% static 'dashboard/favicon.svg' %}" alt="" class="nav-logo">
@@ -474,9 +872,23 @@
             <div class="nav-right">
                 <a href="/dashboard/#tab-feedback" class="nav-btn">Feedback</a>
                 <a href="/dashboard/" class="nav-btn nav-btn-primary">Dashboard</a>
+                <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
             </div>
         </div>
     </nav>
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="#features">Features</a>
+        <a href="#cities">Cities</a>
+        <a href="/dashboard/#tab-research">Research</a>
+        <a href="/dashboard/#tab-feedback">Feedback</a>
+        <a href="/dashboard/">Dashboard</a>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -488,60 +900,61 @@
             <svg width="100%" height="100%" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice">
                 <defs>
                     <linearGradient id="ray-green" x1="0%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%" stop-color="#22c55e" stop-opacity="0.8"/>
-                        <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+                        <stop offset="0%" stop-color="#22c55e" stop-opacity="0.8" />
+                        <stop offset="100%" stop-color="#22c55e" stop-opacity="0" />
                     </linearGradient>
                     <linearGradient id="ray-yellow" x1="0%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%" stop-color="#eab308" stop-opacity="0.7"/>
-                        <stop offset="100%" stop-color="#eab308" stop-opacity="0"/>
+                        <stop offset="0%" stop-color="#eab308" stop-opacity="0.7" />
+                        <stop offset="100%" stop-color="#eab308" stop-opacity="0" />
                     </linearGradient>
                     <linearGradient id="ray-orange" x1="0%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%" stop-color="#f97316" stop-opacity="0.8"/>
-                        <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+                        <stop offset="0%" stop-color="#f97316" stop-opacity="0.8" />
+                        <stop offset="100%" stop-color="#f97316" stop-opacity="0" />
                     </linearGradient>
                     <linearGradient id="ray-red" x1="0%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%" stop-color="#ef4444" stop-opacity="0.8"/>
-                        <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+                        <stop offset="0%" stop-color="#ef4444" stop-opacity="0.8" />
+                        <stop offset="100%" stop-color="#ef4444" stop-opacity="0" />
                     </linearGradient>
                 </defs>
                 <!-- Left side rays (green/yellow) -->
-                <line x1="600" y1="400" x2="100" y2="50" stroke="url(#ray-green)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="150" y2="30" stroke="url(#ray-green)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="200" y2="20" stroke="url(#ray-green)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="250" y2="15" stroke="url(#ray-green)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="300" y2="10" stroke="url(#ray-yellow)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="350" y2="8" stroke="url(#ray-yellow)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="400" y2="5" stroke="url(#ray-yellow)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="450" y2="3" stroke="url(#ray-yellow)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="500" y2="2" stroke="url(#ray-orange)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="550" y2="1" stroke="url(#ray-orange)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="100" y2="50" stroke="url(#ray-green)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="150" y2="30" stroke="url(#ray-green)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="200" y2="20" stroke="url(#ray-green)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="250" y2="15" stroke="url(#ray-green)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="300" y2="10" stroke="url(#ray-yellow)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="350" y2="8" stroke="url(#ray-yellow)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="400" y2="5" stroke="url(#ray-yellow)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="450" y2="3" stroke="url(#ray-yellow)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="500" y2="2" stroke="url(#ray-orange)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="550" y2="1" stroke="url(#ray-orange)" stroke-width="1.5" />
                 <!-- Center -->
-                <line x1="600" y1="400" x2="600" y2="0" stroke="url(#ray-orange)" stroke-width="2"/>
+                <line x1="600" y1="400" x2="600" y2="0" stroke="url(#ray-orange)" stroke-width="2" />
                 <!-- Right side rays (orange/red) -->
-                <line x1="600" y1="400" x2="650" y2="1" stroke="url(#ray-orange)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="700" y2="2" stroke="url(#ray-orange)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="750" y2="3" stroke="url(#ray-red)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="800" y2="5" stroke="url(#ray-red)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="850" y2="8" stroke="url(#ray-red)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="900" y2="10" stroke="url(#ray-red)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="950" y2="15" stroke="url(#ray-red)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="1000" y2="20" stroke="url(#ray-red)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="1050" y2="30" stroke="url(#ray-red)" stroke-width="1.5"/>
-                <line x1="600" y1="400" x2="1100" y2="50" stroke="url(#ray-red)" stroke-width="1.5"/>
+                <line x1="600" y1="400" x2="650" y2="1" stroke="url(#ray-orange)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="700" y2="2" stroke="url(#ray-orange)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="750" y2="3" stroke="url(#ray-red)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="800" y2="5" stroke="url(#ray-red)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="850" y2="8" stroke="url(#ray-red)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="900" y2="10" stroke="url(#ray-red)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="950" y2="15" stroke="url(#ray-red)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="1000" y2="20" stroke="url(#ray-red)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="1050" y2="30" stroke="url(#ray-red)" stroke-width="1.5" />
+                <line x1="600" y1="400" x2="1100" y2="50" stroke="url(#ray-red)" stroke-width="1.5" />
             </svg>
         </div>
 
         <div class="hero-content">
             <h1 class="hero-title">CLEAR25</h1>
             <p class="hero-subtitle">
-                Providing 6-48 hours of advance warning before dangerous wildfire smoke arrives in your city. Powered by 218 monitoring stations.
+                Providing 6-48 hours of advance warning before dangerous wildfire smoke arrives in your city. Powered by
+                218 monitoring stations.
             </p>
             <div class="hero-actions">
                 <a href="/dashboard/" class="btn-primary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                        <polyline points="2 17 12 22 22 17"/>
-                        <polyline points="2 12 12 17 22 12"/>
+                        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                        <polyline points="2 17 12 22 22 17" />
+                        <polyline points="2 12 12 17 22 12" />
                     </svg>
                     Open Dashboard
                 </a>
@@ -574,18 +987,19 @@
 
     <!-- Features Section -->
     <section id="features" class="features">
-        <div class="section-header">
+        <div class="section-header reveal">
             <h2 class="section-title">How it works</h2>
             <p class="section-subtitle">
-                Repurposing existing NAPS monitoring stations to detect approaching wildfire smoke before it reaches major cities.
+                Repurposing existing NAPS monitoring stations to detect approaching wildfire smoke before it reaches
+                major cities.
             </p>
         </div>
         <div class="features-grid">
-            <div class="feature-card">
+            <div class="feature-card reveal reveal-delay-1">
                 <div class="feature-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
-                        <circle cx="12" cy="10" r="3"/>
+                        <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" />
+                        <circle cx="12" cy="10" r="3" />
                     </svg>
                 </div>
                 <h3 class="feature-title">Upstream Detection</h3>
@@ -593,22 +1007,23 @@
                     Monitoring stations 100-600km away detect smoke plumes hours before they reach major cities.
                 </p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card reveal reveal-delay-2">
                 <div class="feature-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                     </svg>
                 </div>
                 <h3 class="feature-title">Regression Analysis</h3>
                 <p class="feature-desc">
-                    20 years of NAPS data used to build correlation models between remote stations and city PM2.5 levels.
+                    20 years of NAPS data used to build correlation models between remote stations and city PM2.5
+                    levels.
                 </p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card reveal reveal-delay-3">
                 <div class="feature-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                     </svg>
                 </div>
                 <h3 class="feature-title">Real-time Alerts</h3>
@@ -621,29 +1036,29 @@
 
     <!-- Cities Section -->
     <section id="cities" class="cities">
-        <div class="section-header">
+        <div class="section-header reveal">
             <h2 class="section-title">Protected cities</h2>
             <p class="section-subtitle">
                 Historical validation across 83 smoke events from 2003-2023.
             </p>
         </div>
         <div class="cities-grid">
-            <div class="city-card">
+            <div class="city-card reveal reveal-delay-1">
                 <div class="city-name">Toronto</div>
                 <div class="city-stat">100%</div>
                 <div class="city-label">Detection</div>
             </div>
-            <div class="city-card">
+            <div class="city-card reveal reveal-delay-1">
                 <div class="city-name">Vancouver</div>
                 <div class="city-stat">100%</div>
                 <div class="city-label">Detection</div>
             </div>
-            <div class="city-card">
+            <div class="city-card reveal reveal-delay-2">
                 <div class="city-name">Montréal</div>
                 <div class="city-stat">100%</div>
                 <div class="city-label">Detection</div>
             </div>
-            <div class="city-card">
+            <div class="city-card reveal reveal-delay-2">
                 <div class="city-name">Edmonton</div>
                 <div class="city-stat">90%</div>
                 <div class="city-label">Detection</div>
@@ -653,16 +1068,16 @@
 
     <!-- CTA Section -->
     <section class="cta">
-        <div class="cta-box">
+        <div class="cta-box reveal">
             <h2 class="cta-title">Get early smoke warnings</h2>
             <p class="cta-subtitle">
                 Access real-time predictions for Toronto, Edmonton, Montréal, and Vancouver. Free and open source.
             </p>
             <a href="/dashboard/" class="btn-primary">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                    <polyline points="2 17 12 22 22 17"/>
-                    <polyline points="2 12 12 17 22 12"/>
+                    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                    <polyline points="2 17 12 22 22 17" />
+                    <polyline points="2 12 12 17 22 12" />
                 </svg>
                 Open Dashboard
             </a>
@@ -687,5 +1102,39 @@
             </div>
         </div>
     </footer>
+
+    <script>
+        // Scroll reveal with IntersectionObserver
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        // Nav scroll effect
+        const nav = document.getElementById('main-nav');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 60);
+        }, { passive: true });
+
+        // Mobile hamburger
+        const hamburger = document.getElementById('nav-hamburger');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (hamburger) {
+            hamburger.addEventListener('click', () => {
+                mobileMenu.classList.toggle('open');
+            });
+            // Close on link click
+            mobileMenu.querySelectorAll('a').forEach(a => {
+                a.addEventListener('click', () => mobileMenu.classList.remove('open'));
+            });
+        }
+    </script>
 </body>
+
 </html>
