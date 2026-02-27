@@ -2,7 +2,7 @@
 Feedback board views: suggestions, votes, comments.
 """
 
-import datetime
+from datetime import datetime
 
 from django.db.models import Count, Q
 from django.http import JsonResponse
@@ -14,7 +14,7 @@ from ..models import Suggestion, SuggestionVote, Comment
 from .utils import (
     MAX_TITLE_LENGTH, MAX_BODY_LENGTH, MAX_COMMENT_LENGTH,
     sanitize_text, validate_json_body, validate_id,
-    contains_profanity, get_avatar_url
+    contains_profanity, serialize_author,
 )
 
 
@@ -42,8 +42,7 @@ def api_suggestions(request):
             "id": s.id,
             "title": s.title,
             "body": s.body,
-            "author": s.author.get_full_name() or s.author.username,
-            "author_avatar": get_avatar_url(s.author),
+            **serialize_author(s.author),
             "created_at": s.created_at.isoformat(),
             "score": score,
             "comment_count": s.num_comments,
@@ -58,7 +57,7 @@ def api_suggestions(request):
     else:  # hot
         now = timezone.now()
         for item in items:
-            age_hours = (now - datetime.datetime.fromisoformat(item["created_at"])).total_seconds() / 3600
+            age_hours = (now - datetime.fromisoformat(item["created_at"])).total_seconds() / 3600
             item["_hot"] = item["score"] / (age_hours + 2) ** 1.5
         items.sort(key=lambda x: x["_hot"], reverse=True)
         for item in items:
@@ -98,8 +97,7 @@ def api_suggestion_create(request):
         "id": s.id,
         "title": s.title,
         "body": s.body,
-        "author": s.author.get_full_name() or s.author.username,
-        "author_avatar": get_avatar_url(s.author),
+        **serialize_author(s.author),
         "created_at": s.created_at.isoformat(),
         "score": 0,
         "comment_count": 0,
@@ -165,8 +163,7 @@ def api_suggestion_detail(request, suggestion_id):
     comments = [{
         "id": c.id,
         "body": c.body,
-        "author": c.author.get_full_name() or c.author.username,
-        "author_avatar": get_avatar_url(c.author),
+        **serialize_author(c.author),
         "created_at": c.created_at.isoformat(),
     } for c in s.comments.all()]
 
@@ -177,8 +174,7 @@ def api_suggestion_detail(request, suggestion_id):
         "id": s.id,
         "title": s.title,
         "body": s.body,
-        "author": s.author.get_full_name() or s.author.username,
-        "author_avatar": get_avatar_url(s.author),
+        **serialize_author(s.author),
         "created_at": s.created_at.isoformat(),
         "score": score,
         "user_vote": user_vote,
@@ -221,8 +217,7 @@ def api_comment_create(request, suggestion_id):
     return JsonResponse({
         "id": c.id,
         "body": c.body,
-        "author": c.author.get_full_name() or c.author.username,
-        "author_avatar": get_avatar_url(c.author),
+        **serialize_author(c.author),
         "created_at": c.created_at.isoformat(),
     })
 

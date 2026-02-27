@@ -39,25 +39,26 @@ from .account import (
 # Health check
 from .health import health_check
 
-# Public API v1
-from .api import (
-    api_v1_live,
-    api_v1_stations,
-    api_v1_cities,
-    api_docs,
-    api_create_key,
-    api_revoke_key,
-    api_register_device,
-    api_unregister_device,
+# Public API v1 data endpoints
+from .api import api_v1_live, api_v1_stations, api_v1_cities, api_docs
+
+# API key management
+from .keys import api_create_key, api_revoke_key
+
+# Device push registration
+from .devices import api_register_device, api_unregister_device
+
+# Billing & subscriptions
+from .billing import (
+    billing_page,
     api_create_payment,
     api_payment_webhook,
     api_subscription_status,
     api_test_upgrade,
-    billing_page,
-    api_v1_get_token,
-    api_v1_refresh_token,
-    api_v1_revoke_token,
 )
+
+# JWT token endpoints
+from .tokens import api_v1_get_token, api_v1_refresh_token, api_v1_revoke_token
 
 # Export all for `from dashboard.views import *`
 __all__ = [

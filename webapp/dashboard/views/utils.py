@@ -4,6 +4,7 @@ Shared utilities for views: validation, sanitization, profanity filter.
 
 import json
 import re
+import urllib.parse
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -108,10 +109,17 @@ def contains_profanity(text):
 
 def get_avatar_url(user):
     """Generate avatar URL using UI Avatars API."""
-    import urllib.parse
     name = user.get_full_name() or user.username or user.email.split("@")[0]
     encoded_name = urllib.parse.quote(name)
     return f"https://ui-avatars.com/api/?name={encoded_name}&background=3b82f6&color=fff&size=128&bold=true"
+
+
+def serialize_author(user):
+    """Return author name and avatar dict for use in JSON responses."""
+    return {
+        "author": user.get_full_name() or user.username,
+        "author_avatar": get_avatar_url(user),
+    }
 
 
 # Paths that are explicitly allowed as redirect destinations

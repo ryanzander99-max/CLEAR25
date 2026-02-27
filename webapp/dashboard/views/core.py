@@ -6,8 +6,6 @@ import datetime
 import logging
 import os
 
-logger = logging.getLogger(__name__)
-
 from django.contrib import auth
 from django.core.cache import cache
 from django.http import JsonResponse
@@ -19,6 +17,8 @@ from django.views.decorators.http import require_http_methods
 from .. import services
 from ..models import ReadingSnapshot, CachedResult
 from .utils import safe_redirect
+
+logger = logging.getLogger(__name__)
 
 
 def index(request):

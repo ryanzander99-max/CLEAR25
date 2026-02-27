@@ -3,6 +3,7 @@ Health check endpoint for monitoring and load balancers.
 """
 
 from django.core.cache import cache
+from django.db import connection
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
@@ -14,8 +15,6 @@ def health_check(request):
 
     Returns database and cache status for observability.
     """
-    from django.db import connection
-
     status = {
         "status": "healthy",
         "timestamp": timezone.now().isoformat(),

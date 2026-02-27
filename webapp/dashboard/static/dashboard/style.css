@@ -257,14 +257,6 @@ body {
     padding: 0 20px 40px;
 }
 
-.nav,
-.nav-tabs,
-.tab,
-.nav-inner,
-.nav-brand,
-.nav-logo {
-    display: none;
-}
 
 /* Tab content visibility */
 .tab-content {
@@ -384,37 +376,6 @@ body {
     color: #ef4444;
 }
 
-/* City pills */
-.nav-pills {
-    display: flex;
-    gap: 4px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 3px;
-}
-
-.pill {
-    all: unset;
-    cursor: pointer;
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #a1a1aa;
-    transition: all 0.15s;
-}
-
-.pill:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.pill-active {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
-}
 
 /* ---- Actions & Buttons ---- */
 .actions {
@@ -2266,19 +2227,6 @@ body {
 
 /* ---- 900px Breakpoint ---- */
 @media (max-width: 900px) {
-    .nav-inner {
-        flex-wrap: wrap;
-        height: auto;
-        padding: 10px 0;
-        gap: 8px;
-    }
-
-    .nav-tabs {
-        order: 3;
-        width: 100%;
-        justify-content: center;
-    }
-
     .key-stats,
     .method-grid {
         grid-template-columns: 1fr;
@@ -2303,23 +2251,8 @@ body {
         padding: 0 12px 32px;
     }
 
-    .nav {
-        margin: 0 -12px;
-        padding: 0 12px;
-    }
-
-    /* Nav: stack brand + auth on one line, tabs below */
-    .nav-brand {
-        gap: 8px;
-    }
-
     .nav-title {
         font-size: 15px;
-    }
-
-    .nav-logo {
-        width: 24px;
-        height: 24px;
     }
 
     .auth-link {
@@ -2328,11 +2261,6 @@ body {
     }
 
     .auth-user {
-        font-size: 12px;
-    }
-
-    .tab {
-        padding: 6px 12px;
         font-size: 12px;
     }
 
@@ -2503,11 +2431,6 @@ body {
 
 /* ---- 400px Breakpoint ---- */
 @media (max-width: 400px) {
-    .tab {
-        padding: 5px 8px;
-        font-size: 11px;
-    }
-
     .city-cards {
         gap: 8px;
     }
