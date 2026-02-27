@@ -4,21 +4,21 @@ Account views: settings page, profile updates, account deletion.
 
 from django.contrib import auth
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from ..models import Suggestion, SuggestionVote, Comment
 from .utils import (
     MAX_NAME_LENGTH, VALID_NAME_PATTERN,
-    sanitize_text, validate_json_body, contains_profanity
+    sanitize_text, validate_json_body, contains_profanity, safe_redirect
 )
 
 
 def settings_page(request):
     """Render the settings page. Requires authentication."""
     if not request.user.is_authenticated:
-        return redirect("/accounts/google/login/")
+        return safe_redirect("/accounts/google/login/")
     current_plan = "free"
     plan_expires = None
     try:

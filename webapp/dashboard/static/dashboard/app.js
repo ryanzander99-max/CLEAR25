@@ -2,6 +2,13 @@
    PM2.5 EWS — App Logic (All Cities Combined)
    ============================================================ */
 
+// Logger: debug suppressed in production, errors always surfaced
+const _isDev = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+const logger = {
+    debug: _isDev ? (...a) => console.log(...a) : () => {},
+    error: (...a) => console.error(...a),
+};
+
 let stations = [];
 let citiesInfo = {};
 let map = null;
@@ -16,7 +23,7 @@ let lastCityAlerts = null;
 async function initPushNotifications() {
     // Only run in Capacitor app context
     if (typeof Capacitor === "undefined" || !Capacitor.isNativePlatform()) {
-        console.log("[Push] Not running in Capacitor, skipping push setup");
+        logger.debug("[Push] Not running in Capacitor, skipping push setup");
         return;
     }
 
@@ -26,7 +33,7 @@ async function initPushNotifications() {
         // Request permission
         const permStatus = await PushNotifications.requestPermissions();
         if (permStatus.receive !== "granted") {
-            console.log("[Push] Permission not granted");
+            logger.debug("[Push] Permission not granted");
             return;
         }
 
@@ -35,7 +42,7 @@ async function initPushNotifications() {
 
         // Handle registration success
         PushNotifications.addListener("registration", async (token) => {
-            console.log("[Push] Registered with token:", token.value.substring(0, 20) + "...");
+            logger.debug("[Push] Registered with token:", token.value.substring(0, 20) + "...");
 
             // Send token to our backend
             try {
@@ -48,20 +55,20 @@ async function initPushNotifications() {
                         cities: [], // Empty = all cities
                     }),
                 });
-                console.log("[Push] Token registered with server");
+                logger.debug("[Push] Token registered with server");
             } catch (e) {
-                console.error("[Push] Failed to register token:", e);
+                logger.error("[Push] Failed to register token:", e);
             }
         });
 
         // Handle registration error
         PushNotifications.addListener("registrationError", (error) => {
-            console.error("[Push] Registration error:", error);
+            logger.error("[Push] Registration error:", error);
         });
 
         // Handle incoming notification while app is open
         PushNotifications.addListener("pushNotificationReceived", (notification) => {
-            console.log("[Push] Notification received:", notification);
+            logger.debug("[Push] Notification received:", notification);
             // Show in-app toast
             if (notification.title) {
                 showPushToast(notification.title, notification.body);
@@ -70,7 +77,7 @@ async function initPushNotifications() {
 
         // Handle notification tap
         PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
-            console.log("[Push] Notification tapped:", action);
+            logger.debug("[Push] Notification tapped:", action);
             // Navigate to dashboard if needed
             const data = action.notification.data;
             if (data && data.city) {
@@ -78,9 +85,9 @@ async function initPushNotifications() {
             }
         });
 
-        console.log("[Push] Push notifications initialized");
+        logger.debug("[Push] Push notifications initialized");
     } catch (e) {
-        console.log("[Push] Not available:", e.message);
+        logger.debug("[Push] Not available:", e.message);
     }
 }
 
@@ -682,7 +689,7 @@ async function quickVote(suggestionId, value, btn) {
             downBtn.classList.toggle("voted-down", data.user_vote === -1);
         }
     } catch (e) {
-        console.error("Vote failed:", e);
+        logger.error("Vote failed:", e);
     }
 }
 
@@ -737,7 +744,7 @@ async function openSuggestionDetail(id) {
 
         modal.style.display = "flex";
     } catch (e) {
-        console.error("Failed to load suggestion:", e);
+        logger.error("Failed to load suggestion:", e);
     }
 }
 
@@ -770,7 +777,7 @@ async function voteSuggestion(value) {
             loadSuggestions(); // Refresh list
         }
     } catch (e) {
-        console.error("Vote failed:", e);
+        logger.error("Vote failed:", e);
     }
 }
 
@@ -785,16 +792,15 @@ async function deleteSuggestion() {
         const resp = await fetch(`/api/suggestions/${currentSuggestionId}/delete/`, {
             method: "DELETE",
         });
-        const data = await resp.json();
 
         if (resp.ok) {
             document.getElementById("modal-detail").style.display = "none";
             loadSuggestions();
         } else {
-            alert(data.error || "Failed to delete suggestion");
+            alert("Failed to delete suggestion");
         }
     } catch (e) {
-        console.error("Delete failed:", e);
+        logger.error("Delete failed:", e);
         alert("Failed to delete suggestion");
     }
 }
@@ -1064,7 +1070,7 @@ async function loadApiKeys() {
             }, 1000);
         }
     } catch (e) {
-        console.error("Failed to load API keys:", e);
+        logger.error("Failed to load API keys:", e);
         if (emptyEl) emptyEl.textContent = "Failed to load API keys";
     }
 }
@@ -1103,7 +1109,7 @@ async function submitCreateKey() {
 
         loadApiKeys();
     } catch (e) {
-        console.error("Failed to create API key:", e);
+        logger.error("Failed to create API key:", e);
         errorEl.textContent = "Network error";
         errorEl.style.display = "block";
     }
@@ -1178,7 +1184,7 @@ async function revokeApiKey(key) {
         showToast("API key revoked");
         loadApiKeys();
     } catch (e) {
-        console.error("Failed to revoke API key:", e);
+        logger.error("Failed to revoke API key:", e);
         showToast("Failed to revoke API key", "error");
     }
 }

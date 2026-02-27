@@ -3,8 +3,11 @@ Public API v1 endpoints for CLEAR25.
 """
 
 import datetime
+import logging
 import os
 from functools import wraps
+
+logger = logging.getLogger(__name__)
 
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -14,8 +17,12 @@ from django.views.decorators.http import require_http_methods
 
 from django.conf import settings
 
+import jwt as _jwt
+
 from .. import services
-from ..models import APIKey, CachedResult, DeviceToken, Payment, PLAN_LIMITS
+from ..jwt_auth import create_access_token, decode_access_token
+from ..models import APIKey, CachedResult, DeviceToken, Payment, PLAN_LIMITS, RefreshToken
+from .utils import safe_redirect
 
 
 # Level name to integer mapping (matches Toronto PM2.5 Methodology v3.0)
@@ -29,30 +36,50 @@ LEVEL_MAP = {
 
 
 def require_api_key(view_func):
-    """Decorator to require valid API key in Authorization header."""
+    """Decorator: accept either a JWT access token or a raw API key.
+
+    Priority:
+    1. Try to decode the bearer value as a JWT access token.
+       If valid, look up the embedded ``key_id`` for rate-limiting.
+    2. Fall back to treating it as a plain API key (backward-compat).
+    """
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return JsonResponse({
                 "error": "Missing or invalid Authorization header",
-                "hint": "Use 'Authorization: Bearer YOUR_API_KEY'"
+                "hint": "Use 'Authorization: Bearer YOUR_API_KEY_OR_JWT'",
             }, status=401)
 
-        key = auth_header[7:]  # Strip "Bearer "
-        try:
-            api_key = APIKey.objects.get(key=key, is_active=True)
-        except APIKey.DoesNotExist:
-            return JsonResponse({"error": "Invalid API key"}, status=401)
+        token = auth_header[7:]
+        api_key = None
 
-        # Check rate limit
+        # ── 1. Try JWT access token ──────────────────────────────────────────
+        try:
+            payload = decode_access_token(token)
+            try:
+                api_key = APIKey.objects.get(id=payload["key_id"], is_active=True)
+            except APIKey.DoesNotExist:
+                return JsonResponse({"error": "API key associated with this token has been revoked"}, status=401)
+        except _jwt.ExpiredSignatureError:
+            return JsonResponse({"error": "Access token has expired", "hint": "Use /api/v1/auth/refresh/ to get a new one"}, status=401)
+        except _jwt.InvalidTokenError:
+            # Not a JWT — fall through to raw API key check
+            pass
+
+        # ── 2. Fall back to raw API key ──────────────────────────────────────
+        if api_key is None:
+            try:
+                api_key = APIKey.objects.get(key=token, is_active=True)
+            except APIKey.DoesNotExist:
+                return JsonResponse({"error": "Invalid API key or token"}, status=401)
+
+        # ── Rate limit ───────────────────────────────────────────────────────
         allowed, remaining, reset = api_key.check_rate_limit()
         if not allowed:
             rate_limit = api_key.get_rate_limit()
-            response = JsonResponse({
-                "error": "Rate limit exceeded",
-                "retry_after": reset
-            }, status=429)
+            response = JsonResponse({"error": "Rate limit exceeded", "retry_after": reset}, status=429)
             response["X-RateLimit-Limit"] = str(rate_limit)
             response["X-RateLimit-Remaining"] = "0"
             response["X-RateLimit-Reset"] = str(reset)
@@ -61,7 +88,6 @@ def require_api_key(view_func):
         request.api_key = api_key
         response = view_func(request, *args, **kwargs)
 
-        # Add rate limit headers to successful responses
         rate_limit = api_key.get_rate_limit()
         response["X-RateLimit-Limit"] = str(rate_limit)
         response["X-RateLimit-Remaining"] = str(remaining)
@@ -178,8 +204,7 @@ def api_v1_cities(request):
 def billing_page(request):
     """Render the billing/subscription page."""
     if not request.user.is_authenticated:
-        from django.shortcuts import redirect
-        return redirect("/accounts/google/login/")
+        return safe_redirect("/accounts/google/login/")
     try:
         profile = request.user.profile
         current_plan = profile.active_plan
@@ -438,12 +463,9 @@ def api_create_payment(request):
             "invoice_url": invoice.get("invoice_url"),
             "invoice_id": invoice.get("id"),
         })
-    except Exception as e:
-        import traceback
-        return JsonResponse({
-            "error": f"{type(e).__name__}: {str(e)}",
-            "trace": traceback.format_exc(),
-        }, status=500)
+    except Exception:
+        logger.exception("api_create_payment: unexpected error for user %s", request.user.id)
+        return JsonResponse({"error": "Payment service unavailable. Please try again."}, status=500)
 
 
 @csrf_exempt
@@ -569,3 +591,123 @@ def api_test_upgrade(request):
         "plan": plan,
         "expires": profile.plan_expires.isoformat(),
     })
+
+
+# ── JWT Auth endpoints ────────────────────────────────────────────────────────
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_v1_get_token(request):
+    """Exchange an API key for a JWT access token + refresh token.
+
+    Request body:
+      { "api_key": "<your_api_key>" }
+
+    Response:
+      {
+        "access_token":  "<jwt>",           // valid 1 hour
+        "refresh_token": "<opaque_token>",  // valid 7 days
+        "expires_in":    3600,
+        "token_type":    "Bearer"
+      }
+    """
+    import json
+    try:
+        data = json.loads(request.body) if request.body else {}
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    raw_key = data.get("api_key", "").strip()
+    if not raw_key:
+        return JsonResponse({"error": "api_key is required"}, status=400)
+
+    try:
+        api_key = APIKey.objects.select_related("user").get(key=raw_key, is_active=True)
+    except APIKey.DoesNotExist:
+        return JsonResponse({"error": "Invalid API key"}, status=401)
+
+    # Revoke any expired refresh tokens for this user to keep the table clean
+    RefreshToken.objects.filter(user=api_key.user, expires_at__lt=timezone.now()).update(revoked=True)
+
+    access_token = create_access_token(api_key.user_id, api_key.id)
+    raw_refresh, _ = RefreshToken.create_for_user(api_key.user)
+
+    from ..jwt_auth import ACCESS_TOKEN_LIFETIME
+    return JsonResponse({
+        "access_token":  access_token,
+        "refresh_token": raw_refresh,
+        "expires_in":    int(ACCESS_TOKEN_LIFETIME.total_seconds()),
+        "token_type":    "Bearer",
+    })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_v1_refresh_token(request):
+    """Rotate a refresh token — invalidates the old one and issues a new pair.
+
+    Request body:
+      { "refresh_token": "<current_refresh_token>" }
+
+    Response: same shape as /api/v1/auth/token/
+    """
+    import json
+    try:
+        data = json.loads(request.body) if request.body else {}
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    raw_refresh = data.get("refresh_token", "").strip()
+    if not raw_refresh:
+        return JsonResponse({"error": "refresh_token is required"}, status=400)
+
+    rt = RefreshToken.verify(raw_refresh)
+    if rt is None:
+        return JsonResponse({"error": "Invalid or expired refresh token"}, status=401)
+
+    # Rotation: revoke the used token immediately
+    rt.revoked = True
+    rt.save(update_fields=["revoked"])
+
+    # Get an active API key for this user (needed to embed key_id in access token)
+    api_key = rt.user.api_keys.filter(is_active=True).first()
+    if not api_key:
+        return JsonResponse({"error": "No active API key on account"}, status=401)
+
+    access_token = create_access_token(rt.user_id, api_key.id)
+    raw_new_refresh, _ = RefreshToken.create_for_user(rt.user)
+
+    from ..jwt_auth import ACCESS_TOKEN_LIFETIME
+    return JsonResponse({
+        "access_token":  access_token,
+        "refresh_token": raw_new_refresh,
+        "expires_in":    int(ACCESS_TOKEN_LIFETIME.total_seconds()),
+        "token_type":    "Bearer",
+    })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_v1_revoke_token(request):
+    """Revoke a refresh token, ending the token family.
+
+    Request body:
+      { "refresh_token": "<refresh_token_to_revoke>" }
+    """
+    import json
+    try:
+        data = json.loads(request.body) if request.body else {}
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    raw_refresh = data.get("refresh_token", "").strip()
+    if not raw_refresh:
+        return JsonResponse({"error": "refresh_token is required"}, status=400)
+
+    rt = RefreshToken.verify(raw_refresh)
+    if rt is not None:
+        rt.revoked = True
+        rt.save(update_fields=["revoked"])
+
+    # Always return ok — don't leak whether the token existed
+    return JsonResponse({"ok": True})

@@ -34,6 +34,10 @@ urlpatterns = [
     # Push notifications
     path("api/push/register/", views.api_register_device),
     path("api/push/unregister/", views.api_unregister_device),
+    # JWT auth
+    path("api/v1/auth/token/",   views.api_v1_get_token),
+    path("api/v1/auth/refresh/", views.api_v1_refresh_token),
+    path("api/v1/auth/revoke/",  views.api_v1_revoke_token),
     # Subscriptions
     path("api/v1/subscribe/", views.api_create_payment),
     path("api/v1/subscribe/webhook/", views.api_payment_webhook),

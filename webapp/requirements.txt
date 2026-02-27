@@ -8,3 +8,4 @@ django-allauth
 PyJWT
 cryptography
 httpx[http2]
+django-cors-headers

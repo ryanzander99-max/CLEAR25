@@ -3,18 +3,22 @@ Core views: index, stations, demo, live data, refresh, authentication.
 """
 
 import datetime
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 from django.contrib import auth
 from django.core.cache import cache
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
 
 from .. import services
 from ..models import ReadingSnapshot, CachedResult
+from .utils import safe_redirect
 
 
 def index(request):
@@ -159,9 +163,9 @@ def api_refresh(request):
             "stations_fetched": len(readings),
             "stations_evaluated": len(result["stations"]),
         })
-    except Exception as e:
-        import traceback
-        return JsonResponse({"error": str(e), "trace": traceback.format_exc()}, status=500)
+    except Exception:
+        logger.exception("api_refresh: unexpected error during data refresh")
+        return JsonResponse({"error": "Data refresh failed. Check server logs."}, status=500)
 
 
 def api_auth_status(request):
@@ -177,4 +181,4 @@ def api_auth_status(request):
 def logout_view(request):
     """Log out the current user and redirect to home."""
     auth.logout(request)
-    return redirect("/")
+    return safe_redirect("/")

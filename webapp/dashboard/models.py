@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import secrets
 from django.db import models
 from django.contrib.auth.models import User
@@ -219,6 +220,53 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.plan} - {self.status}"
+
+
+class RefreshToken(models.Model):
+    """Opaque refresh token for JWT rotation.
+
+    The raw token is given to the client exactly once.  Only its SHA-256
+    hash is persisted so a database leak cannot be used to forge tokens.
+    """
+    user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name="refresh_tokens")
+    token_hash = models.CharField(max_length=64, unique=True, db_index=True)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    revoked    = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user", "revoked"]),
+        ]
+
+    # ── Factory ───────────────────────────────────────────────────────────────
+
+    @classmethod
+    def create_for_user(cls, user):
+        """Generate a new refresh token.  Returns ``(raw_token, instance)``."""
+        from .jwt_auth import REFRESH_TOKEN_LIFETIME
+        raw        = secrets.token_hex(32)          # 64-char hex, 256 bits
+        token_hash = hashlib.sha256(raw.encode()).hexdigest()
+        expires_at = timezone.now() + REFRESH_TOKEN_LIFETIME
+        instance   = cls.objects.create(user=user, token_hash=token_hash, expires_at=expires_at)
+        return raw, instance
+
+    # ── Lookup ────────────────────────────────────────────────────────────────
+
+    @classmethod
+    def verify(cls, raw_token):
+        """Return the ``RefreshToken`` if valid and not expired; else ``None``."""
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        try:
+            rt = cls.objects.select_related("user").get(token_hash=token_hash, revoked=False)
+        except cls.DoesNotExist:
+            return None
+        if rt.expires_at < timezone.now():
+            return None
+        return rt
+
+    def __str__(self):
+        return f"RefreshToken(user={self.user_id}, revoked={self.revoked})"
 
 
 @receiver(post_save, sender=User)

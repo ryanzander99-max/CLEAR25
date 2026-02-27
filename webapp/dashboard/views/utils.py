@@ -5,7 +5,10 @@ Shared utilities for views: validation, sanitization, profanity filter.
 import json
 import re
 
+from django.conf import settings
 from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 
 
 # =============================================================================
@@ -109,3 +112,35 @@ def get_avatar_url(user):
     name = user.get_full_name() or user.username or user.email.split("@")[0]
     encoded_name = urllib.parse.quote(name)
     return f"https://ui-avatars.com/api/?name={encoded_name}&background=3b82f6&color=fff&size=128&bold=true"
+
+
+# Paths that are explicitly allowed as redirect destinations
+_REDIRECT_ALLOWLIST = {
+    "/",
+    "/accounts/google/login/",
+    "/accounts/login/",
+    "/accounts/logout/",
+    "/settings/",
+    "/billing/",
+}
+
+
+def safe_redirect(url, fallback="/"):
+    """Redirect to `url` only if it is safe; otherwise redirect to `fallback`.
+
+    A URL is considered safe when it:
+    - Is an internal relative path (no host/scheme), AND
+    - Is present in the explicit allowlist.
+
+    This prevents open-redirect vulnerabilities where user-supplied input
+    (e.g. ?next=https://evil.com) could be used to send users off-site.
+    """
+    allowed_hosts = set(settings.ALLOWED_HOSTS) - {"*"}
+    is_safe = url_has_allowed_host_and_scheme(
+        url=url,
+        allowed_hosts=allowed_hosts,
+        require_https=not settings.DEBUG,
+    )
+    if is_safe and url in _REDIRECT_ALLOWLIST:
+        return redirect(url)
+    return redirect(fallback)

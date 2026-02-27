@@ -54,6 +54,9 @@ from .api import (
     api_subscription_status,
     api_test_upgrade,
     billing_page,
+    api_v1_get_token,
+    api_v1_refresh_token,
+    api_v1_revoke_token,
 )
 
 # Export all for `from dashboard.views import *`
@@ -99,4 +102,8 @@ __all__ = [
     "api_subscription_status",
     "api_test_upgrade",
     "billing_page",
+    # JWT auth
+    "api_v1_get_token",
+    "api_v1_refresh_token",
+    "api_v1_revoke_token",
 ]

@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "dashboard",
+    "corsheaders",
 ]
 
 SITE_ID = 1
@@ -37,6 +38,7 @@ SITE_ID = 1
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -150,12 +152,23 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{levelname}] {asctime} {name}: {message}",
+            "style": "{",
+        },
+    },
     "handlers": {
-        "console": {"class": "logging.StreamHandler"},
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
     },
     "root": {"handlers": ["console"], "level": "WARNING"},
     "loggers": {
         "django": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+        # App views — log exceptions with full tracebacks server-side
+        "dashboard.views": {"handlers": ["console"], "level": "ERROR", "propagate": False},
     },
 }
 
@@ -257,3 +270,30 @@ NOWPAYMENTS_API_URL = (
     "https://api.sandbox.nowpayments.io" if NOWPAYMENTS_SANDBOX
     else "https://api.nowpayments.io"
 )
+
+# =============================================================================
+# CORS
+# =============================================================================
+
+# Only API routes need CORS headers (dashboard is same-origin)
+CORS_URLS_REGEX = r"^/api/.*$"
+
+CORS_ALLOWED_ORIGINS = [
+    "https://clear25.xyz",
+    "https://www.clear25.xyz",
+]
+
+# Allow Vercel preview deployments (*.vercel.app)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
+
+if DEBUG:
+    CORS_ALLOWED_ORIGINS += [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+
+# Only allow the methods and headers actually needed by the API
+CORS_ALLOW_METHODS = ["GET", "OPTIONS"]
+CORS_ALLOW_HEADERS = ["accept", "authorization", "content-type", "x-api-key"]
