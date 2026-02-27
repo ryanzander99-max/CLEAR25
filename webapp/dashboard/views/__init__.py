@@ -45,9 +45,6 @@ from .api import api_v1_live, api_v1_stations, api_v1_cities, api_docs
 # API key management
 from .keys import api_create_key, api_revoke_key
 
-# Device push registration
-from .devices import api_register_device, api_unregister_device
-
 # Billing & subscriptions
 from .billing import (
     billing_page,
@@ -94,9 +91,6 @@ __all__ = [
     "api_docs",
     "api_create_key",
     "api_revoke_key",
-    # Push notifications
-    "api_register_device",
-    "api_unregister_device",
     # Subscriptions
     "api_create_payment",
     "api_payment_webhook",

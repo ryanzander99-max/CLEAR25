@@ -33,3 +33,6 @@ android/
 
 # AI
 AGENTS.mds
+
+#Data
+data/*.xlsx

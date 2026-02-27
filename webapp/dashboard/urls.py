@@ -31,9 +31,6 @@ urlpatterns = [
     path("api/v1/cities/", views.api_v1_cities),
     path("api/v1/keys/create/", views.api_create_key),
     path("api/v1/keys/revoke/", views.api_revoke_key),
-    # Push notifications
-    path("api/push/register/", views.api_register_device),
-    path("api/push/unregister/", views.api_unregister_device),
     # JWT auth
     path("api/v1/auth/token/",   views.api_v1_get_token),
     path("api/v1/auth/refresh/", views.api_v1_refresh_token),
